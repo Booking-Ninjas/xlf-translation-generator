@@ -83,6 +83,7 @@ Your Google Sheet must have these columns (order doesn't matter):
 3. **Import XLF:**
    - Click "Import" section
    - Select your `.xlf` file (must be `source-language="en_US"`)
+   - Select categories to import (all except CustomLabel are enabled by default)
    - Click "Import to Google Sheets"
    - View statistics: Added, Updated, Unchanged, Deactivated
 

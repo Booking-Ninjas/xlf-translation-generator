@@ -27,13 +27,23 @@ function extractCategory(id) {
  *   - Missing id in XLF → remove or mark as inactive
  * 
  * @param {string} xlfContent - XLF file content
+ * @param {Array<string>} selectedCategories - Optional array of categories to import (null = all)
  * @returns {Promise<Object>} - Sync result with statistics
  */
-async function syncXLFtoSheet(xlfContent) {
+async function syncXLFtoSheet(xlfContent, selectedCategories = null) {
     try {
         // Parse XLF
         const parsed = await parseXLF(xlfContent);
-        const segments = parsed.segments;
+        let segments = parsed.segments;
+
+        // Filter segments by selected categories if provided
+        if (selectedCategories && Array.isArray(selectedCategories) && selectedCategories.length > 0) {
+            const categorySet = new Set(selectedCategories);
+            segments = segments.filter(seg => {
+                const category = extractCategory(seg.id);
+                return categorySet.has(category);
+            });
+        }
 
         // Read existing Google Sheet data
         const sheetData = await readSheet();
@@ -166,11 +176,15 @@ async function syncXLFtoSheet(xlfContent) {
             await appendRows(rowsToAdd);
         }
 
+        const categoryInfo = selectedCategories && selectedCategories.length > 0 
+            ? ` (${selectedCategories.length} categories selected)`
+            : '';
+
         return {
             success: true,
             stats,
             totalSegments: segments.length,
-            message: `Sync completed: ${stats.added} added, ${stats.updated} updated, ${stats.unchanged} unchanged, ${stats.deactivated} deactivated`
+            message: `Sync completed: ${stats.added} added, ${stats.updated} updated, ${stats.unchanged} unchanged, ${stats.deactivated} deactivated${categoryInfo}`
         };
 
     } catch (error) {

@@ -41,10 +41,14 @@ const BASE_COLUMNS = ['id', 'category', 'maxwidth', 'size-unit', 'English'];
 // System columns
 const SYSTEM_COLUMNS = ['active']; // active (true/false) - marks if record is present in current XLF
 
+// Categories excluded by default during import (user can enable them manually)
+const EXCLUDED_CATEGORIES = ['CustomLabel'];
+
 module.exports = {
     GOOGLE_SHEET_ID,
     SHEET_NAME,
     LANGUAGES,
     BASE_COLUMNS,
-    SYSTEM_COLUMNS
+    SYSTEM_COLUMNS,
+    EXCLUDED_CATEGORIES
 };

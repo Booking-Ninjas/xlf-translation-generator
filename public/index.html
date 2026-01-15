@@ -24,6 +24,12 @@
                 </div>
                 <div class="file-name" id="importFileName"></div>
             </div>
+            
+            <div id="categorySelection" style="display: none;">
+                <h3 style="font-size: 1em; color: #444; margin-bottom: 10px; font-weight: 500;">Select Categories to Import:</h3>
+                <div id="categoryList" class="category-list"></div>
+            </div>
+            
             <button class="btn" id="importBtn" disabled>Import to Google Sheets</button>
             
             <div class="loader" id="importLoader"></div>
@@ -62,6 +68,24 @@
     </div>
     <script>
         let importedFile = null;
+        let parsedCategories = [];
+        let selectedCategories = new Set();
+        let defaultExcludedCategories = ['CustomLabel']; // Fallback, will be loaded from server
+        
+        // Load configuration from server
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                
+                if (data.success && data.defaultExcludedCategories) {
+                    defaultExcludedCategories = data.defaultExcludedCategories;
+                    console.log('Loaded excluded categories from config:', defaultExcludedCategories);
+                }
+            } catch (error) {
+                console.error('Failed to load config, using defaults:', error);
+            }
+        }
         // Load available languages on page load
         async function loadLanguages() {
             try {
@@ -86,14 +110,141 @@
             }
         }
         // Import file selection
-        document.getElementById('importFile').addEventListener('change', (e) => {
+        document.getElementById('importFile').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file) {
                 importedFile = file;
                 document.getElementById('importFileName').textContent = `Selected: ${file.name}`;
-                document.getElementById('importBtn').disabled = false;
+                
+                // Parse file to extract categories
+                await extractAndDisplayCategories(file);
             }
         });
+        
+        // Extract categories from XLF file
+        async function extractAndDisplayCategories(file) {
+            try {
+                let text = await file.text();
+                
+                // Handle nested XML declarations (common in some XLF files)
+                // Remove duplicate XML declarations that appear after the first one
+                const xmlDeclRegex = /<\?xml[^?]*\?>/g;
+                const matches = text.match(xmlDeclRegex);
+                if (matches && matches.length > 1) {
+                    console.log('Found nested XML declarations, cleaning up...');
+                    // Keep only the first XML declaration
+                    text = text.replace(xmlDeclRegex, (match, offset) => {
+                        return offset === text.indexOf(match) ? match : '';
+                    });
+                }
+                
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(text, 'text/xml');
+                
+                // Check for parsing errors
+                const parserError = xmlDoc.querySelector('parsererror');
+                if (parserError) {
+                    console.error('XML Parser Error:', parserError.textContent);
+                    throw new Error('Invalid XML format: ' + parserError.textContent);
+                }
+                
+                // Extract all trans-unit IDs (handles nested structure)
+                const transUnits = xmlDoc.getElementsByTagName('trans-unit');
+                const categorySet = new Set();
+                
+                console.log('Found trans-units:', transUnits.length);
+                
+                if (transUnits.length === 0) {
+                    throw new Error('No trans-unit elements found in XLF file');
+                }
+                
+                for (let unit of transUnits) {
+                    const id = unit.getAttribute('id');
+                    if (id) {
+                        // Extract category (first part before the first dot)
+                        const category = id.split('.')[0];
+                        if (category) {
+                            categorySet.add(category);
+                            console.log('Found category:', category, 'from ID:', id);
+                        }
+                    }
+                }
+                
+                // Sort categories alphabetically
+                parsedCategories = Array.from(categorySet).sort();
+                console.log('Total unique categories:', parsedCategories);
+                
+                if (parsedCategories.length === 0) {
+                    throw new Error('No categories found in XLF file');
+                }
+                
+                // Initialize selected categories (all except those in defaultExcludedCategories)
+                selectedCategories.clear();
+                parsedCategories.forEach(cat => {
+                    if (!defaultExcludedCategories.includes(cat)) {
+                        selectedCategories.add(cat);
+                    }
+                });
+                
+                console.log('Selected categories by default:', Array.from(selectedCategories));
+                console.log('Excluded categories:', defaultExcludedCategories);
+                
+                // Display category checkboxes
+                displayCategories();
+                
+                // Enable import button
+                document.getElementById('importBtn').disabled = false;
+                
+            } catch (error) {
+                console.error('Failed to parse categories:', error);
+                alert('Failed to parse XLF file: ' + error.message + '\n\nPlease check the browser console for more details.');
+                document.getElementById('importBtn').disabled = true;
+            }
+        }
+        
+        // Display category checkboxes
+        function displayCategories() {
+            const categoryList = document.getElementById('categoryList');
+            const categorySelection = document.getElementById('categorySelection');
+            
+            console.log('displayCategories called with:', parsedCategories);
+            console.log('categorySelection element:', categorySelection);
+            console.log('categoryList element:', categoryList);
+            
+            if (parsedCategories.length === 0) {
+                console.log('No categories to display');
+                categorySelection.style.display = 'none';
+                return;
+            }
+            
+            categoryList.innerHTML = '';
+            
+            parsedCategories.forEach(category => {
+                const label = document.createElement('label');
+                label.className = 'category-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = category;
+                checkbox.checked = selectedCategories.has(category);
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        selectedCategories.add(category);
+                    } else {
+                        selectedCategories.delete(category);
+                    }
+                });
+                
+                const text = document.createTextNode(' ' + category);
+                
+                label.appendChild(checkbox);
+                label.appendChild(text);
+                categoryList.appendChild(label);
+            });
+            
+            console.log('Setting categorySelection display to block');
+            categorySelection.style.display = 'block';
+        }
         // Trigger file input on area click
         document.getElementById('importUpload').addEventListener('click', (e) => {
             if (e.target.id === 'importFileName') return;
@@ -102,6 +253,13 @@
         // Import XLF to Google Sheets
         document.getElementById('importBtn').addEventListener('click', async () => {
             if (!importedFile) return;
+            
+            // Validate at least one category is selected
+            if (selectedCategories.size === 0) {
+                alert('Please select at least one category to import');
+                return;
+            }
+            
             const btn = document.getElementById('importBtn');
             const loader = document.getElementById('importLoader');
             const message = document.getElementById('importMessage');
@@ -111,6 +269,7 @@
             try {
                 const formData = new FormData();
                 formData.append('xlf', importedFile);
+                formData.append('categories', JSON.stringify(Array.from(selectedCategories)));
                 const response = await fetch('/api/import', {
                     method: 'POST',
                     body: formData
@@ -187,6 +346,7 @@
             }
         });
         // Initialize
+        loadConfig();
         loadLanguages();
     </script>
 </body>
