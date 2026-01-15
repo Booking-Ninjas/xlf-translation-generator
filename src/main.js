@@ -4,6 +4,19 @@ const { exportXLF, getAvailableLanguages } = require('./xlf-exporter');
 const { BASE_COLUMNS } = require('./config');
 
 /**
+ * Extracts category from id (first part before the first dot)
+ * @param {string} id - Full id like "PicklistValue.Contact.Type.Owner"
+ * @returns {string} - Category part like "PicklistValue"
+ */
+function extractCategory(id) {
+    if (!id || typeof id !== 'string') return '';
+    const parts = id.split('.');
+
+    console.log(parts[0]);
+    return parts[0] || '';
+}
+
+/**
  * Synchronizes XLF file to Google Sheets
  * Independent operation - reads XLF and updates Google Sheets
  * 
@@ -62,6 +75,7 @@ async function syncXLFtoSheet(xlfContent) {
                 // New segment - add to sheet with empty translations
                 const newRow = {
                     id: segment.id,
+                    category: extractCategory(segment.id),
                     maxwidth: segment.maxwidth,
                     'size-unit': segment.sizeUnit,
                     English: segment.source,

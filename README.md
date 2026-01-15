@@ -51,7 +51,8 @@ Your Google Sheet must have these columns (order doesn't matter):
 
 | Column | Type | Description | Example |
 |--------|------|-------------|---------|
-| `id` | Text | Unique XLF identifier | `CustomLabel.HelloWorld` |
+| `id` | Text | Unique XLF identifier | `PicklistValue.Contact.Type.Owner` |
+| `category` | Text | Category extracted from id (first part before dot) | `PicklistValue` |
 | `maxwidth` | Number | Character width limit | `50` |
 | `size-unit` | Text | Unit of measurement | `char` |
 | `English` | Text | Source text (en_US) | `Hello World` |
@@ -61,7 +62,7 @@ Your Google Sheet must have these columns (order doesn't matter):
 | ... | ... | Add more language columns | ... |
 
 **Important Notes:**
-- First 5 columns (`id`, `maxwidth`, `size-unit`, `English`, `active`) are required
+- Сolumns `id`, `category`, `maxwidth`, `size-unit`, `English`, `active` are required
 - Language column names must match exactly: "French", "Spanish", "German", etc. (case-sensitive)
 - Add/remove/reorder language columns freely - the tool auto-detects them
 - `active=TRUE` = record will be exported, `FALSE` = skipped
@@ -133,7 +134,7 @@ When you import an XLF file:
 1. **Parse XLF** - Extracts all `<trans-unit>` elements with `id`, `source`, `maxwidth`, `size-unit`
 2. **Compare with Sheet** - Checks each segment against existing Google Sheet data
 3. **Apply Changes:**
-   - **New segment** → Add row with `active=TRUE`, empty translation columns
+   - **New segment** → Add row with `category`, `active=TRUE`, empty translation columns
    - **English text changed** → Update English, clear ALL translations, set `active=TRUE`
    - **Unchanged** → Keep as-is
    - **Missing in XLF** → Set `active=FALSE` (deactivated, not deleted)

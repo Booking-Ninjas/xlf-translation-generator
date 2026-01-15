@@ -36,7 +36,7 @@ const LANGUAGES = {
 };
 
 // Required base columns (must exist in sheet)
-const BASE_COLUMNS = ['id', 'maxwidth', 'size-unit', 'English'];
+const BASE_COLUMNS = ['id', 'category', 'maxwidth', 'size-unit', 'English'];
 
 // System columns
 const SYSTEM_COLUMNS = ['active']; // active (true/false) - marks if record is present in current XLF
