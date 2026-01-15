@@ -77,19 +77,9 @@ async function exportXLF(targetLang, sheetData) {
             }
         };
 
-        const innerXmlString = innerBuilder.buildObject(innerXliffStructure);
+        const xmlString = innerBuilder.buildObject(innerXliffStructure);
 
-        // Build OUTER XLF manually to avoid escaping inner XML
-        const outerXml = `<?xml version="1.0" encoding="UTF-8"?>
-<xliff version="1.2">
-    <file original="Salesforce" source-language="en_US" target-language="en_US" translation-type="metadata" datatype="xml">
-        <body>
-${innerXmlString}
-        </body>
-    </file>
-</xliff>`;
-
-        return outerXml;
+        return xmlString;
 
     } catch (error) {
         throw new Error(`Failed to export XLF: ${error.message}`);
