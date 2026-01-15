@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XLF Translation Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 XLF Translation Generator</h1>
+            <p>Manage translations via Google Sheets</p>
+        </div>
+        <!-- Import Section -->
+        <div class="card">
+            <h2><span class="card-icon">📥</span> Import XLF to Google Sheets</h2>
+            
+            <div class="file-upload" id="importUpload">
+                <input type="file" id="importFile" accept=".xlf" style="display:none;">
+                <div class="file-upload-label">
+                    📁 Click anywhere to select XLF file<br>
+                    <small>Only en_US source language files are supported</small>
+                </div>
+                <div class="file-name" id="importFileName"></div>
+            </div>
+            <button class="btn" id="importBtn" disabled>Import to Google Sheets</button>
+            
+            <div class="loader" id="importLoader"></div>
+            <div class="message" id="importMessage"></div>
+            
+        </div>
+        <!-- Export Section -->
+        <div class="card">
+            <h2><span class="card-icon">📤</span> Export Translated XLF</h2>
+            
+            <label for="languageSelect" style="display: block; margin-bottom: 10px; color: #666; font-weight: 600;">
+                Select Target Language:
+            </label>
+            <select id="languageSelect" disabled>
+                <option value="">Loading languages...</option>
+            </select>
+            <button class="btn" id="exportBtn">Export XLF with Translations</button>
+            
+            <div class="loader" id="exportLoader"></div>
+            <div class="message" id="exportMessage"></div>
+        </div>
+        <!-- Info Section -->
+        <div class="card">
+            <div class="info-box">
+                <h3>ℹ️ How to Use</h3>
+                <ul>
+                    <li><strong>Import:</strong> Upload XLF file (source-language="en_US") to sync with Google Sheets</li>
+                    <li><strong>Edit:</strong> Open Google Sheets and add/edit translations</li>
+                    <li><strong>Export:</strong> Select language and download translated XLF anytime</li>
+                </ul>
+                <p style="margin-top: 10px; color: #666;">
+                    <strong>Note:</strong> If English text changes during import, all translations for that segment will be cleared.
+                </p>
+            </div>
+        </div>
+    </div>
+    <script>
+        let importedFile = null;
+        // Load available languages on page load
+        async function loadLanguages() {
+            try {
+                const response = await fetch('/api/languages');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const select = document.getElementById('languageSelect');
+                    select.innerHTML = '<option value="">Select a language...</option>';
+                    
+                    data.languages.forEach(lang => {
+                        const option = document.createElement('option');
+                        option.value = lang;
+                        option.textContent = lang;
+                        select.appendChild(option);
+                    });
+                    
+                    select.disabled = false;
+                }
+            } catch (error) {
+                console.error('Failed to load languages:', error);
+            }
+        }
+        // Import file selection
+        document.getElementById('importFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                importedFile = file;
+                document.getElementById('importFileName').textContent = `Selected: ${file.name}`;
+                document.getElementById('importBtn').disabled = false;
+            }
+        });
+        // Trigger file input on area click
+        document.getElementById('importUpload').addEventListener('click', (e) => {
+            if (e.target.id === 'importFileName') return;
+            document.getElementById('importFile').click();
+        });
+        // Import XLF to Google Sheets
+        document.getElementById('importBtn').addEventListener('click', async () => {
+            if (!importedFile) return;
+            const btn = document.getElementById('importBtn');
+            const loader = document.getElementById('importLoader');
+            const message = document.getElementById('importMessage');
+            btn.disabled = true;
+            loader.style.display = 'block';
+            message.style.display = 'none';
+            try {
+                const formData = new FormData();
+                formData.append('xlf', importedFile);
+                const response = await fetch('/api/import', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    message.className = 'message success';
+                    message.textContent = data.message;
+                    message.style.display = 'block';
+                } else {
+                    message.className = 'message error';
+                    message.textContent = `Error: ${data.error}`;
+                    message.style.display = 'block';
+                }
+            } catch (error) {
+                message.className = 'message error';
+                message.textContent = `Error: ${error.message}`;
+                message.style.display = 'block';
+            } finally {
+                loader.style.display = 'none';
+                btn.disabled = false;
+            }
+        });
+        // Export XLF
+        document.getElementById('exportBtn').addEventListener('click', async () => {
+            const language = document.getElementById('languageSelect').value;
+            
+            if (!language) {
+                alert('Please select a target language');
+                return;
+            }
+            const btn = document.getElementById('exportBtn');
+            const loader = document.getElementById('exportLoader');
+            const message = document.getElementById('exportMessage');
+            btn.disabled = true;
+            loader.style.display = 'block';
+            message.style.display = 'none';
+            try {
+                const response = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ language })
+                });
+                if (response.ok) {
+                    // Download file
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+                    a.download = `translation_${language}_${dateStr}.xlf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    message.className = 'message success';
+                    message.textContent = `✅ XLF file exported successfully for ${language}`;
+                    message.style.display = 'block';
+                } else {
+                    const data = await response.json();
+                    message.className = 'message error';
+                    message.textContent = `Error: ${data.error}`;
+                    message.style.display = 'block';
+                }
+            } catch (error) {
+                message.className = 'message error';
+                message.textContent = `Error: ${error.message}`;
+                message.style.display = 'block';
+            } finally {
+                loader.style.display = 'none';
+                btn.disabled = false;
+            }
+        });
+        // Initialize
+        loadLanguages();
+    </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+const xml2js = require('xml2js');
+const { LANGUAGES } = require('./config');
+
+/**
+ * Generates XLF file with translations for specified language
+ * Creates XLF structure from Google Sheets data (no template needed)
+ * 
+ * @param {string} targetLang - Language display name (e.g., 'French', 'Spanish')
+ * @param {Array} sheetData - Data from Google Sheets
+ * @returns {Promise<string>} - Generated XLF content
+ */
+async function exportXLF(targetLang, sheetData) {
+    try {
+        const langCode = LANGUAGES[targetLang];
+        if (!langCode) {
+            throw new Error(`Unknown target language: ${targetLang}`);
+        }
+
+        // Filter only active records (active can be: true, 'true', date string, etc)
+        // Any truthy value except false/'false'/0 is considered active
+        const activeRecords = sheetData.filter(row => {
+            const active = row.active;
+            // Consider active if: true, 'true', 'TRUE', date string, or any truthy value
+            // NOT active only if: false, 'false', 'FALSE', empty, 0
+            if (!active) return false;
+            if (active === false || active === 'false' || active === 'FALSE' || active === '0') return false;
+            return true;
+        });
+
+        // Build trans-units from sheet data
+        const transUnits = activeRecords.map(row => {
+            const unit = {
+                '$': {
+                    id: row.id || '',
+                    maxwidth: row.maxwidth || '',
+                    'size-unit': row['size-unit'] || ''
+                },
+                source: row.English || ''
+            };
+
+            // Add target only if translation exists
+            if (row[targetLang]) {
+                unit.target = row[targetLang];
+            }
+
+            // Add note if exists in data
+            if (row.note) {
+                unit.note = row.note;
+            }
+
+            return unit;
+        });
+
+        // Build INNER XLF document as complete XML string
+        const innerBuilder = new xml2js.Builder({
+            xmldec: { version: '1.0', encoding: 'UTF-8' },
+            renderOpts: { pretty: true, indent: '    ' }
+        });
+
+        const innerXliffStructure = {
+            xliff: {
+                '$': {
+                    version: '1.2'
+                },
+                file: {
+                    '$': {
+                        original: 'Salesforce',
+                        'source-language': 'en_US',
+                        'target-language': langCode,
+                        'translation-type': 'metadata',
+                        datatype: 'xml'
+                    },
+                    body: {
+                        'trans-unit': transUnits
+                    }
+                }
+            }
+        };
+
+        const innerXmlString = innerBuilder.buildObject(innerXliffStructure);
+
+        // Build OUTER XLF manually to avoid escaping inner XML
+        const outerXml = `<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2">
+    <file original="Salesforce" source-language="en_US" target-language="en_US" translation-type="metadata" datatype="xml">
+        <body>
+${innerXmlString}
+        </body>
+    </file>
+</xliff>`;
+
+        return outerXml;
+
+    } catch (error) {
+        throw new Error(`Failed to export XLF: ${error.message}`);
+    }
+}
+
+/**
+ * Gets available languages for export based on Google Sheet columns
+ * Only returns languages that exist BOTH in LANGUAGES map AND in Google Sheet
+ * @param {Array} sheetHeaders - Column headers from Google Sheet
+ * @returns {Array} - Array of language display names available in sheet
+ */
+function getAvailableLanguages(sheetHeaders) {
+    if (!sheetHeaders) {
+        // Fallback: return all configured languages
+        return Object.keys(LANGUAGES);
+    }
+    
+    // Filter: only languages that are in LANGUAGES map AND exist as columns
+    return Object.keys(LANGUAGES).filter(lang => sheetHeaders.includes(lang));
+}
+
+/**
+ * Gets language code for display name
+ * @param {string} displayName - Language display name
+ * @returns {string} - Language code or null
+ */
+function getLanguageCode(displayName) {
+    return LANGUAGES[displayName] || null;
+}
+
+module.exports = {
+    exportXLF,
+    getAvailableLanguages,
+    getLanguageCode
+};
