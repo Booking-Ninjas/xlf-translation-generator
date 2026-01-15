@@ -27,12 +27,25 @@ async function exportXLF(targetLang, sheetData) {
             return true;
         });
 
-        // Check for maxwidth violations
+        // Check for maxwidth violations and build trans-units, skipping invalid ones
         const maxwidthErrors = [];
-
-        // Build trans-units from sheet data, skipping records without translation for targetLang
         const transUnits = activeRecords
             .filter(row => row[targetLang] && row[targetLang].trim() !== '') // Only include if translation exists and is not empty
+            .filter(row => {
+                // If translation exceeds maxwidth, add to errors and skip from export
+                if (row.maxwidth && !isNaN(Number(row.maxwidth))) {
+                    const max = Number(row.maxwidth);
+                    if (typeof row[targetLang] === 'string' && row[targetLang].length > max) {
+                        maxwidthErrors.push({
+                            id: row.id,
+                            value: row[targetLang],
+                            maxwidth: row.maxwidth
+                        });
+                        return false; // skip this entry
+                    }
+                }
+                return true;
+            })
             .map(row => {
                 const unit = {
                     '$': {
@@ -43,17 +56,6 @@ async function exportXLF(targetLang, sheetData) {
                     source: row.English || ''
                 };
                 unit.target = row[targetLang];
-                // Check if translation exceeds maxwidth
-                if (row.maxwidth && !isNaN(Number(row.maxwidth))) {
-                    const max = Number(row.maxwidth);
-                    if (typeof row[targetLang] === 'string' && row[targetLang].length > max) {
-                        maxwidthErrors.push({
-                            id: row.id,
-                            value: row[targetLang],
-                            maxwidth: row.maxwidth
-                        });
-                    }
-                }
                 return unit;
             });
 

@@ -69,11 +69,11 @@ async function exportXLF(language, outputFile) {
             await fs.writeFile(outputFile, result.xlfContent);
             console.log(`Export completed. ${result.segmentCount} segments exported.`);
             if (result.maxwidthErrors && result.maxwidthErrors.length > 0) {
-                console.warn('\nWARNING: Some translations exceed maxwidth and will cause import errors:');
+                console.warn('\nWARNING: The following translations exceed maxwidth and were NOT included in the exported file:');
                 result.maxwidthErrors.forEach(e => {
                     console.warn(`  ${e.id}: ${e.value} (max: ${e.maxwidth})`);
                 });
-                console.warn('\nImport of this file will fail for these entries.');
+                console.warn('\nThese entries must be fixed before import.');
             }
         } else {
             console.error(`Export failed: ${result.error}`);

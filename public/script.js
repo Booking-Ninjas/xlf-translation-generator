@@ -231,11 +231,11 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
                 errorBlock.style.overflowY = '';
                 errorBlock.style.fontSize = '0.85em';
                 errorBlock.innerHTML =
-                    `<b>Some translations exceed maxwidth and will cause import errors:</b><br>` +
+                    `<b>The following translations exceed maxwidth and were NOT included in the exported file:</b><br>` +
                     `<ul style='margin:8px 0 0 18px; word-break:break-all; font-size:0.85em;'>` +
                     errors.map(e => `<li style='margin-bottom:2px;'><b>${e.id}</b>: <span style='color:#b71c1c; word-break:break-all;'>${e.value}</span> (max: ${e.maxwidth})</li>`).join('') +
                     `</ul>` +
-                    `<div style='margin-top:8px;color:#b71c1c;'><b>Import of this file will fail for these entries.</b></div>`;
+                    `<div style='margin-top:8px;color:#b71c1c;'><b>You must fix these entries before import.</b></div>`;
             }
         }
         if (response.ok) {
