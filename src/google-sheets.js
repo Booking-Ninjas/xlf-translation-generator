@@ -135,13 +135,7 @@ async function writeSheet(data) {
             rows.push(row);
         });
 
-        // Clear existing data and write new data
-        const lastColumn = String.fromCharCode(65 + headers.length - 1); // A, B, C, ...
-        await sheets.spreadsheets.values.clear({
-            spreadsheetId: GOOGLE_SHEET_ID,
-            range: `${SHEET_NAME}!A:${lastColumn}`,
-        });
-
+        // Overwrite existing data starting from A1
         await sheets.spreadsheets.values.update({
             spreadsheetId: GOOGLE_SHEET_ID,
             range: `${SHEET_NAME}!A1`,

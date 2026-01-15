@@ -1,5 +1,5 @@
 const { parseXLF } = require('./xlf-parser');
-const { getSheetHeaders, readSheet, writeSheet } = require('./google-sheets');
+const { getSheetHeaders, readSheet, updateRows, appendRows } = require('./google-sheets');
 const { exportXLF, getAvailableLanguages } = require('./xlf-exporter');
 const { BASE_COLUMNS } = require('./config');
 
@@ -11,8 +11,6 @@ const { BASE_COLUMNS } = require('./config');
 function extractCategory(id) {
     if (!id || typeof id !== 'string') return '';
     const parts = id.split('.');
-
-    console.log(parts[0]);
     return parts[0] || '';
 }
 
@@ -67,72 +65,106 @@ async function syncXLFtoSheet(xlfContent) {
             deactivated: 0
         };
 
-        // Process XLF segments - mark as active (true)
-        for (const [id, segment] of xlfMap) {
-            const existingRow = sheetMap.get(id);
-
-            if (!existingRow) {
-                // New segment - add to sheet with empty translations
-                const newRow = {
-                    id: segment.id,
-                    category: extractCategory(segment.id),
-                    maxwidth: segment.maxwidth,
-                    'size-unit': segment.sizeUnit,
-                    English: segment.source,
-                    active: true
-                };
+        // Process existing rows while preserving their order in the sheet
+        const rowsToUpdate = [];
+        const rowsToAdd = [];
+        
+        for (let i = 0; i < sheetData.length; i++) {
+            const row = sheetData[i];
+            const rowNumber = i + 2; // Row number in sheet: array index + 1 (0-based to 1-based) + 1 (header row)
+            
+            // Skip rows without valid id
+            if (!row.id || row.id.trim() === '') {
+                continue;
+            }
+            
+            const segment = xlfMap.get(row.id);
+            
+            if (segment) {
+                // ID found in XLF - check if any fields need updating
+                const needsUpdate = 
+                    row.English !== segment.source || 
+                    row.active !== true ||
+                    row.maxwidth !== segment.maxwidth ||
+                    row['size-unit'] !== segment.sizeUnit;
                 
-                // Add empty values for all language columns that exist in sheet
-                languageColumns.forEach(col => {
-                    newRow[col] = '';
-                });
-                
-                updatedData.push(newRow);
-                stats.added++;
-            } else {
-                // Existing segment - check if English changed
-                if (existingRow.English !== segment.source) {
-                    // English changed - update English and clear all translations
-                    const updatedRow = {
-                        ...existingRow,
-                        English: segment.source,
-                        maxwidth: segment.maxwidth,
-                        'size-unit': segment.sizeUnit,
-                        active: true
-                    };
-                    
-                    // Clear all language translations
-                    languageColumns.forEach(col => {
-                        updatedRow[col] = '';
-                    });
-                    
-                    updatedData.push(updatedRow);
-                    stats.updated++;
+                if (needsUpdate) {
+                    if (row.English !== segment.source) {
+                        // Source text changed - update English field and clear all translations
+                        const updatedRow = {
+                            ...row,
+                            English: segment.source,
+                            maxwidth: segment.maxwidth,
+                            'size-unit': segment.sizeUnit,
+                            active: true
+                        };
+                        
+                        // Clear all language translations
+                        languageColumns.forEach(col => {
+                            updatedRow[col] = '';
+                        });
+                        
+                        rowsToUpdate.push({ row: rowNumber, data: updatedRow });
+                        stats.updated++;
+                    } else {
+                        // Only metadata changed (maxwidth, size-unit, or active status)
+                        rowsToUpdate.push({
+                            row: rowNumber,
+                            data: {
+                                ...row,
+                                maxwidth: segment.maxwidth,
+                                'size-unit': segment.sizeUnit,
+                                active: true
+                            }
+                        });
+                        stats.unchanged++;
+                    }
                 } else {
-                    updatedData.push({
-                        ...existingRow,
-                        maxwidth: segment.maxwidth,
-                        'size-unit': segment.sizeUnit,
-                        active: true
-                    });
                     stats.unchanged++;
                 }
-            }
-        }
-
-        // Process rows not in XLF - mark as inactive (false) but keep in sheet
-        for (const [id, row] of sheetMap) {
-            if (!xlfMap.has(id)) {
-                updatedData.push({
-                    ...row,
-                    active: false
-                });
+                
+                // Remove from map to track which segments are new
+                xlfMap.delete(row.id);
+            } else {
+                // ID not found in XLF - mark as inactive if currently active
+                if (row.active !== false) {
+                    rowsToUpdate.push({
+                        row: rowNumber,
+                        data: { ...row, active: false }
+                    });
+                }
                 stats.deactivated++;
             }
         }
 
-        // Write updated data back to Google Sheets
-        await writeSheet(updatedData);
+        // Add new segments from XLF that don't exist in sheet yet
+        for (const [id, segment] of xlfMap) {
+            const newRow = {
+                id: segment.id,
+                category: extractCategory(segment.id),
+                maxwidth: segment.maxwidth,
+                'size-unit': segment.sizeUnit,
+                English: segment.source,
+                active: true
+            };
+            
+            // Initialize all language columns as empty strings
+            languageColumns.forEach(col => {
+                newRow[col] = '';
+            });
+            
+            rowsToAdd.push(newRow);
+            stats.added++;
+        }
+
+        // Apply all changes to Google Sheet
+        if (rowsToUpdate.length > 0) {
+            await updateRows(rowsToUpdate);
+        }
+        
+        if (rowsToAdd.length > 0) {
+            await appendRows(rowsToAdd);
+        }
 
         return {
             success: true,
