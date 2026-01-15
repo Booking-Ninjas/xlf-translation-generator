@@ -10,7 +10,6 @@ async function loadConfig() {
         const data = await response.json();
         if (data.success && data.defaultExcludedCategories) {
             defaultExcludedCategories = data.defaultExcludedCategories;
-            console.log('Loaded excluded categories from config:', defaultExcludedCategories);
         }
     } catch (error) {
         console.error('Failed to load config, using defaults:', error);
@@ -55,7 +54,6 @@ async function extractAndDisplayCategories(file) {
         const xmlDeclRegex = /<\?xml[^?]*\?>/g;
         const matches = text.match(xmlDeclRegex);
         if (matches && matches.length > 1) {
-            console.log('Found nested XML declarations, cleaning up...');
             // Keep only the first XML declaration
             text = text.replace(xmlDeclRegex, (match, offset) => {
                 return offset === text.indexOf(match) ? match : '';
@@ -72,7 +70,7 @@ async function extractAndDisplayCategories(file) {
         // Extract all trans-unit IDs (handles nested structure)
         const transUnits = xmlDoc.getElementsByTagName('trans-unit');
         const categorySet = new Set();
-        console.log('Found trans-units:', transUnits.length);
+
         if (transUnits.length === 0) {
             throw new Error('No trans-unit elements found in XLF file');
         }
@@ -83,13 +81,12 @@ async function extractAndDisplayCategories(file) {
                 const category = id.split('.')[0];
                 if (category) {
                     categorySet.add(category);
-                    console.log('Found category:', category, 'from ID:', id);
                 }
             }
         }
         // Sort categories alphabetically
         parsedCategories = Array.from(categorySet).sort();
-        console.log('Total unique categories:', parsedCategories);
+
         if (parsedCategories.length === 0) {
             throw new Error('No categories found in XLF file');
         }
@@ -100,8 +97,7 @@ async function extractAndDisplayCategories(file) {
                 selectedCategories.add(cat);
             }
         });
-        console.log('Selected categories by default:', Array.from(selectedCategories));
-        console.log('Excluded categories:', defaultExcludedCategories);
+
         // Display category checkboxes
         displayCategories();
         // Enable import button
@@ -116,11 +112,8 @@ async function extractAndDisplayCategories(file) {
 function displayCategories() {
     const categoryList = document.getElementById('categoryList');
     const categorySelection = document.getElementById('categorySelection');
-    console.log('displayCategories called with:', parsedCategories);
-    console.log('categorySelection element:', categorySelection);
-    console.log('categoryList element:', categoryList);
+    
     if (parsedCategories.length === 0) {
-        console.log('No categories to display');
         categorySelection.style.display = 'none';
         return;
     }
@@ -144,7 +137,6 @@ function displayCategories() {
         label.appendChild(text);
         categoryList.appendChild(label);
     });
-    console.log('Setting categorySelection display to block');
     categorySelection.style.display = 'block';
 }
 // Trigger file input on area click
