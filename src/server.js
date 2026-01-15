@@ -122,6 +122,10 @@ app.post('/api/export', async (req, res) => {
             const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
             res.setHeader('Content-Type', 'application/xml');
             res.setHeader('Content-Disposition', `attachment; filename="translation_${language}_${dateStr}.xlf"`);
+            // Pass maxwidth errors via header (JSON string)
+            if (result.maxwidthErrors && result.maxwidthErrors.length > 0) {
+                res.setHeader('x-maxwidth-errors', JSON.stringify(result.maxwidthErrors));
+            }
             res.send(result.xlfContent);
         } else {
             res.status(400).json(result);

@@ -215,13 +215,14 @@ async function generateXLF(targetLanguage) {
         }
 
         // Generate XLF from sheet data (no template needed)
-        const xlfContent = await exportXLF(targetLanguage, sheetData);
+        const { xlf, maxwidthErrors } = await exportXLF(targetLanguage, sheetData);
 
         return {
             success: true,
-            xlfContent,
+            xlfContent: xlf,
             language: targetLanguage,
-            segmentCount: sheetData.length
+            segmentCount: sheetData.length,
+            maxwidthErrors: maxwidthErrors || []
         };
 
     } catch (error) {

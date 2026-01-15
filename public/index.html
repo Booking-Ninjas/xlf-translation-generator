@@ -47,7 +47,8 @@
                 <option value="">Loading languages...</option>
             </select>
             <button class="btn" id="exportBtn">Export XLF with Translations</button>
-            
+            <!-- Error block for maxwidth violations -->
+            <div class="message error" id="maxwidthErrorBlock" style="display:none;"></div>
             <div class="loader" id="exportLoader"></div>
             <div class="message" id="exportMessage"></div>
         </div>
@@ -296,7 +297,10 @@
         // Export XLF
         document.getElementById('exportBtn').addEventListener('click', async () => {
             const language = document.getElementById('languageSelect').value;
-            
+            // Hide error block on export click
+            const errorBlock = document.getElementById('maxwidthErrorBlock');
+            errorBlock.style.display = 'none';
+            errorBlock.innerHTML = '';
             if (!language) {
                 alert('Please select a target language');
                 return;
@@ -315,6 +319,26 @@
                     },
                     body: JSON.stringify({ language })
                 });
+                // Check for custom maxwidth error info in response headers
+                const maxwidthHeader = response.headers.get('x-maxwidth-errors');
+                if (maxwidthHeader) {
+                    // Parse JSON array of errors
+                    let errors = [];
+                    try { errors = JSON.parse(maxwidthHeader); } catch (e) {}
+                    if (Array.isArray(errors) && errors.length > 0) {
+                        errorBlock.style.display = 'block';
+                        errorBlock.style.wordBreak = 'break-all';
+                        errorBlock.style.maxHeight = '';
+                        errorBlock.style.overflowY = '';
+                        errorBlock.style.fontSize = '0.85em';
+                        errorBlock.innerHTML =
+                            `<b>Some translations exceed maxwidth and will cause import errors:</b><br>` +
+                            `<ul style='margin:8px 0 0 18px; word-break:break-all; font-size:0.85em;'>` +
+                            errors.map(e => `<li style='margin-bottom:2px;'><b>${e.id}</b>: <span style='color:#b71c1c; word-break:break-all;'>${e.value}</span> (max: ${e.maxwidth})</li>`).join('') +
+                            `</ul>` +
+                            `<div style='margin-top:8px;color:#b71c1c;'><b>Import of this file will fail for these entries.</b></div>`;
+                    }
+                }
                 if (response.ok) {
                     // Download file
                     const blob = await response.blob();

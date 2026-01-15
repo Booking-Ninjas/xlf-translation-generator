@@ -27,6 +27,9 @@ async function exportXLF(targetLang, sheetData) {
             return true;
         });
 
+        // Check for maxwidth violations
+        const maxwidthErrors = [];
+
         // Build trans-units from sheet data, skipping records without translation for targetLang
         const transUnits = activeRecords
             .filter(row => row[targetLang] && row[targetLang].trim() !== '') // Only include if translation exists and is not empty
@@ -40,6 +43,17 @@ async function exportXLF(targetLang, sheetData) {
                     source: row.English || ''
                 };
                 unit.target = row[targetLang];
+                // Check if translation exceeds maxwidth
+                if (row.maxwidth && !isNaN(Number(row.maxwidth))) {
+                    const max = Number(row.maxwidth);
+                    if (typeof row[targetLang] === 'string' && row[targetLang].length > max) {
+                        maxwidthErrors.push({
+                            id: row.id,
+                            value: row[targetLang],
+                            maxwidth: row.maxwidth
+                        });
+                    }
+                }
                 return unit;
             });
 
@@ -71,7 +85,7 @@ async function exportXLF(targetLang, sheetData) {
 
         const xmlString = innerBuilder.buildObject(innerXliffStructure);
 
-        return xmlString;
+        return { xlf: xmlString, maxwidthErrors };
 
     } catch (error) {
         throw new Error(`Failed to export XLF: ${error.message}`);

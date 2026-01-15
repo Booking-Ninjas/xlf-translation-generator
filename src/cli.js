@@ -62,13 +62,19 @@ async function importXLF(filePath) {
 async function exportXLF(language, outputFile) {
     try {
         console.log(`Exporting ${language} translations to ${outputFile}...`);
-        
         // Generate XLF from Google Sheets data (no template needed)
         const result = await generateXLF(language);
 
         if (result.success) {
             await fs.writeFile(outputFile, result.xlfContent);
             console.log(`Export completed. ${result.segmentCount} segments exported.`);
+            if (result.maxwidthErrors && result.maxwidthErrors.length > 0) {
+                console.warn('\nWARNING: Some translations exceed maxwidth and will cause import errors:');
+                result.maxwidthErrors.forEach(e => {
+                    console.warn(`  ${e.id}: ${e.value} (max: ${e.maxwidth})`);
+                });
+                console.warn('\nImport of this file will fail for these entries.');
+            }
         } else {
             console.error(`Export failed: ${result.error}`);
             process.exit(1);
