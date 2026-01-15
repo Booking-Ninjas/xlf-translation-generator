@@ -1,5 +1,7 @@
 # XLF Translation Generator
 
+**Live Version:** [https://xlf-translation-generator-one.vercel.app](https://xlf-translation-generator-one.vercel.app) 
+
 A utility for managing Salesforce XLIFF translation files using Google Sheets as a collaborative translation database. Designed specifically for Salesforce XLF files with nested structure and English (`en_US`) as the source language.
 
 ## What It Does
