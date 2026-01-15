@@ -27,29 +27,21 @@ async function exportXLF(targetLang, sheetData) {
             return true;
         });
 
-        // Build trans-units from sheet data
-        const transUnits = activeRecords.map(row => {
-            const unit = {
-                '$': {
-                    id: row.id || '',
-                    maxwidth: row.maxwidth || '',
-                    'size-unit': row['size-unit'] || ''
-                },
-                source: row.English || ''
-            };
-
-            // Add target only if translation exists
-            if (row[targetLang]) {
+        // Build trans-units from sheet data, skipping records without translation for targetLang
+        const transUnits = activeRecords
+            .filter(row => row[targetLang] && row[targetLang].trim() !== '') // Only include if translation exists and is not empty
+            .map(row => {
+                const unit = {
+                    '$': {
+                        id: row.id || '',
+                        maxwidth: row.maxwidth || '',
+                        'size-unit': row['size-unit'] || ''
+                    },
+                    source: row.English || ''
+                };
                 unit.target = row[targetLang];
-            }
-
-            // Add note if exists in data
-            if (row.note) {
-                unit.note = row.note;
-            }
-
-            return unit;
-        });
+                return unit;
+            });
 
         // Build INNER XLF document as complete XML string
         const innerBuilder = new xml2js.Builder({
