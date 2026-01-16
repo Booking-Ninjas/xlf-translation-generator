@@ -210,13 +210,13 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
             },
             body: JSON.stringify({ language })
         });
-        // Check for custom maxwidth error info in response headers
-        const maxwidthHeader = response.headers.get('x-maxwidth-errors');
-        if (maxwidthHeader) {
-            // Parse JSON array of errors
-            let errors = [];
-            try { errors = JSON.parse(maxwidthHeader); } catch (e) {}
-            if (Array.isArray(errors) && errors.length > 0) {
+        
+        if (response.ok) {
+            // Parse JSON response with file data and metadata
+            const data = await response.json();
+            
+            // Check for maxwidth errors in response body
+            if (data.maxwidthErrors && Array.isArray(data.maxwidthErrors) && data.maxwidthErrors.length > 0) {
                 errorBlock.style.display = 'block';
                 errorBlock.style.wordBreak = 'break-all';
                 errorBlock.style.maxHeight = '';
@@ -225,19 +225,22 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
                 errorBlock.innerHTML =
                     `<b>The following translations exceed maxwidth and were NOT included in the exported file:</b><br>` +
                     `<ul style='margin:8px 0 0 18px; word-break:break-all; font-size:0.85em;'>` +
-                    errors.map(e => `<li style='margin-bottom:2px;'><b>${e.id}</b>: <span style='color:#b71c1c; word-break:break-all;'>${e.value}</span> (max: ${e.maxwidth})</li>`).join('') +
+                    data.maxwidthErrors.map(e => `<li style='margin-bottom:2px;'><b>${e.id}</b>: <span style='color:#b71c1c; word-break:break-all;'>${e.value}</span> (max: ${e.maxwidth})</li>`).join('') +
                     `</ul>` +
                     `<div style='margin-top:8px;color:#b71c1c;'><b>You must fix these entries before import.</b></div>`;
             }
-        }
-        if (response.ok) {
-            // Download file
-            const blob = await response.blob();
+            
+            // Decode base64 content and create blob for download
+            const binaryString = atob(data.content);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: 'application/xml' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-            a.download = `translation_${language}_${dateStr}.xlf`;
+            a.download = data.filename;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);

@@ -118,15 +118,16 @@ app.post('/api/export', async (req, res) => {
         const result = await generateXLF(language);
 
         if (result.success) {
-            // Set headers for file download
+            // Return JSON with file content and metadata (including maxwidth errors)
             const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-            res.setHeader('Content-Type', 'application/xml');
-            res.setHeader('Content-Disposition', `attachment; filename="translation_${language}_${dateStr}.xlf"`);
-            // Pass maxwidth errors via header (JSON string)
-            if (result.maxwidthErrors && result.maxwidthErrors.length > 0) {
-                res.setHeader('x-maxwidth-errors', JSON.stringify(result.maxwidthErrors));
-            }
-            res.send(result.xlfContent);
+            const filename = `translation_${language}_${dateStr}.xlf`;
+            
+            res.json({
+                success: true,
+                filename: filename,
+                content: Buffer.from(result.xlfContent).toString('base64'),
+                maxwidthErrors: result.maxwidthErrors || []
+            });
         } else {
             res.status(400).json(result);
         }
