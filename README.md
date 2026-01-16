@@ -4,6 +4,10 @@
 
 A utility for managing Salesforce XLIFF translation files using Google Sheets as a collaborative translation database. Designed specifically for Salesforce XLF files with nested structure and English (`en_US`) as the source language.
 
+## Documentation
+
+See the [Salesforce Translation Workflow](translations-workflow.md) for a step-by-step guide to exporting, translating, and importing custom object translations in a Salesforce Scratch Org.
+
 ## What It Does
 
 This tool solves a specific problem: managing translations for Salesforce `.xlf` files across multiple languages with team collaboration. Instead of editing XML files manually, you:
