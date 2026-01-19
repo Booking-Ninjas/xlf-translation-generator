@@ -25,12 +25,14 @@ Inactive or invalid labels are skipped automatically.
 ## Step-by-Step Guide
 
 ### 1. Enable Languages in Scratch Org
+
 1. Open **Translation Workbench** in Scratch Org.
 2. Enable and add required languages.
 
 ---
 
 ### 2. Export Translations from Salesforce
+
 1. Go to **Translation Workbench → Export**.
 2. Export translations in **XLIFF format**.
 3. Wait for the email and download the file.
@@ -39,6 +41,7 @@ Inactive or invalid labels are skipped automatically.
 ---
 
 ### 3. Upload XLIFF to Translation Tool
+
 1. Open the `XLF Translation Generator`.
 2. Upload the extracted XLIFF file.
 3. Review detected categories:
@@ -46,11 +49,11 @@ Inactive or invalid labels are skipped automatically.
    - Custom Fields
    - Custom Applications
    - Custom Objects
-4. **Do NOT enable Custom Labels category** (handled by a separate tool).
 
 ---
 
 ### 4. Import Labels into Translation Database
+
 1. Import labels into the tool.
 2. Labels are saved in Google Sheets.
 3. Each label has an **Active** flag:
@@ -62,6 +65,7 @@ The sheet acts as a persistent translation database.
 ---
 
 ### 5. Add Translations
+
 1. Enter translations for required languages in the spreadsheet.
 2. Follow **MaxWidth** limits for each label.
 3. Cells exceeding limits are highlighted in red.
@@ -71,6 +75,7 @@ The sheet acts as a persistent translation database.
 ---
 
 ### 6. Generate Translation File
+
 1. Select a target language (e.g. Spanish, French).
 2. Generate and download the XLIFF file.
 3. Labels that exceed the maximum length (MaxWidth) are automatically excluded from the file. The file can still be imported.
@@ -79,6 +84,7 @@ The sheet acts as a persistent translation database.
 ---
 
 ### 7. Import Translations into Scratch Org
+
 1. Open **Translation Workbench → Import** in Scratch Org.
 2. Upload the generated XLIFF file.
 3. Start the import process.
@@ -88,6 +94,7 @@ The sheet acts as a persistent translation database.
 ---
 
 ### 8. Fetch Translation Metadata
+
 1. Update `.forceignore`:
    - Temporarily comment out `**/objectTranslations/**`.
 2. Fetch metadata from the Scratch Org.
