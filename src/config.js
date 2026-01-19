@@ -1,7 +1,7 @@
 // Configuration for XLF Translator
 
 const GOOGLE_SHEET_ID = '14KzQfO6fOl2S4gs_dQ415d5ir8gCFNDXzK37v0eGeDE';
-const SHEET_NAME = 'Workbench_Transl';
+const SHEET_NAME = 'BN_Translation';
 
 // Language mappings: Display Name -> XLF language code
 const LANGUAGES = {
