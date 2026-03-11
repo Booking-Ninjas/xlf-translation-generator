@@ -6,6 +6,8 @@ This document describes how to export, translate, and import custom object trans
 
 The process is based on **XLIFF files** and a centralized **Google Sheets translation database**, with validation to prevent invalid imports.
 
+**Live Tool:** https://xlf-translation-generator-one.vercel.app/
+
 ---
 
 ## How It Works
@@ -42,7 +44,8 @@ Inactive or invalid labels are skipped automatically.
 
 ### 3. Upload XLIFF to Translation Tool
 
-1. Open the `XLF Translation Generator`.
+1. Open the `XLF Translation Generator`  
+   https://xlf-translation-generator-one.vercel.app/
 2. Upload the extracted XLIFF file.
 3. Review detected categories:
    - Buttons
@@ -54,13 +57,13 @@ Inactive or invalid labels are skipped automatically.
 
 ### 4. Import Labels into Translation Database
 
-1. Import labels into the tool.
-2. Labels are saved in Google Sheets.
+1. In the tool, click **Import to Google Sheets**.
+2. Labels are saved in Google Sheet.
 3. Each label has an **Active** flag:
    - `true` → included in exports
-   - `false` → skipped (old/removed labels)
+   - `false` → skipped (old or removed labels)
 
-The sheet acts as a persistent translation database.
+The spreadsheet acts as a persistent translation database.
 
 ---
 
@@ -78,7 +81,7 @@ The sheet acts as a persistent translation database.
 
 1. Select a target language (e.g. Spanish, French).
 2. Generate and download the XLIFF file.
-3. Labels that exceed the maximum length (MaxWidth) are automatically excluded from the file. The file can still be imported.
+3. Labels that exceed the maximum length (**MaxWidth**) are automatically excluded from the file. The file can still be imported.
 4. Fix any validation errors in the translation database and regenerate the file after all issues are resolved.
 
 ---
@@ -104,8 +107,6 @@ The sheet acts as a persistent translation database.
 
 ## Notes & Limitations
 
-- XLIFF is the **only supported format**.
+- **XLIFF is the only supported format.**
 - Invalid translations are skipped to avoid full import cancellation.
 - The Google Sheet keeps historical (inactive) translations for reuse.
-
----
