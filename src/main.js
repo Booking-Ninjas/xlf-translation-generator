@@ -14,6 +14,13 @@ function extractCategory(id) {
 	return parts[0] || '';
 }
 
+// Normalizes the active field from Google Sheets (stored as string "TRUE"/"FALSE") to boolean
+function isActive(value) {
+	if (typeof value === 'boolean') return value;
+	if (typeof value === 'string') return value.toUpperCase() === 'TRUE';
+	return false;
+}
+
 /**
  * Synchronizes XLF file to Google Sheets
  * Independent operation - reads XLF and updates Google Sheets
@@ -97,7 +104,7 @@ async function syncXLFtoSheet(xlfContent, selectedCategories = null) {
 				// ID found in XLF - check if any fields need updating
 				const needsUpdate =
 					row.English !== segment.source ||
-					row.active !== true ||
+					!isActive(row.active) ||
 					row.maxwidth !== segment.maxwidth ||
 					row['size-unit'] !== segment.sizeUnit;
 
@@ -140,13 +147,13 @@ async function syncXLFtoSheet(xlfContent, selectedCategories = null) {
 				xlfMap.delete(row.id);
 			} else {
 				// ID not found in XLF - mark as inactive if currently active
-				if (row.active !== false) {
+				if (isActive(row.active)) {
 					rowsToUpdate.push({
 						row: rowNumber,
 						data: { ...row, active: false },
 					});
+					stats.deactivated++;
 				}
-				stats.deactivated++;
 			}
 		}
 
@@ -203,9 +210,10 @@ async function syncXLFtoSheet(xlfContent, selectedCategories = null) {
  * Independent operation - can be called anytime
  *
  * @param {string} targetLanguage - Target language display name (e.g., 'French', 'Spanish')
+ * @param {Set<string>|null} maskIds - Optional Set of IDs to restrict export to (Export Mask)
  * @returns {Promise<Object>} - Export result with XLF content
  */
-async function generateXLF(targetLanguage) {
+async function generateXLF(targetLanguage, maskIds = null) {
 	try {
 		// Read Google Sheets data and headers
 		const sheetData = await readSheet();
@@ -219,8 +227,8 @@ async function generateXLF(targetLanguage) {
 			);
 		}
 
-		// Generate XLF from sheet data (no template needed)
-		const { xlf, maxwidthErrors } = await exportXLF(targetLanguage, sheetData);
+		// Generate XLF from sheet data, optionally filtered by maskIds
+		const { xlf, maxwidthErrors } = await exportXLF(targetLanguage, sheetData, maskIds);
 
 		return {
 			success: true,

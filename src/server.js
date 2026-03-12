@@ -11,9 +11,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configure multer for file uploads (memory storage for serverless compatibility)
-const upload = multer({ 
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+const upload = multer({
+	storage: multer.memoryStorage(),
+	limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
 });
 
 // Middleware
@@ -25,7 +25,7 @@ app.use(express.static('public'));
  * GET / - Serve main page
  */
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+	res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 /**
@@ -33,70 +33,69 @@ app.get('/', (req, res) => {
  * Upload XLF file and sync to Google Sheets
  */
 app.post('/api/import', upload.single('xlf'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'No file uploaded' 
-            });
-        }
+	try {
+		if (!req.file) {
+			return res.status(400).json({
+				success: false,
+				error: 'No file uploaded',
+			});
+		}
 
-        // Read uploaded file from memory buffer
-        const xlfContent = req.file.buffer.toString('utf-8');
+		// Read uploaded file from memory buffer
+		const xlfContent = req.file.buffer.toString('utf-8');
 
-        // Get selected categories from request
-        const categories = req.body.categories ? JSON.parse(req.body.categories) : null;
+		// Get selected categories from request
+		const categories = req.body.categories ? JSON.parse(req.body.categories) : null;
 
-        // Sync to Google Sheets with category filter
-        const result = await syncXLFtoSheet(xlfContent, categories);
+		// Sync to Google Sheets with category filter
+		const result = await syncXLFtoSheet(xlfContent, categories);
 
-        if (result.success) {
-            res.json(result);
-        } else {
-            res.status(400).json(result);
-        }
-
-    } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            error: error.message 
-        });
-    }
+		if (result.success) {
+			res.json(result);
+		} else {
+			res.status(400).json(result);
+		}
+	} catch (error) {
+		res.status(500).json({
+			success: false,
+			error: error.message,
+		});
+	}
 });
 
 /**
  * GET /api/languages - Get available languages
  */
 app.get('/api/languages', async (req, res) => {
-    try {
-        const languages = await getLanguages();
-        res.json({ 
-            success: true, 
-            languages 
-        });
-    } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            error: error.message 
-        });
-    }
+	try {
+		const languages = await getLanguages();
+		res.json({
+			success: true,
+			languages,
+		});
+	} catch (error) {
+		res.status(500).json({
+			success: false,
+			error: error.message,
+		});
+	}
 });
 
 /**
  * GET /api/config - Get configuration (excluded categories, etc.)
  */
 app.get('/api/config', (req, res) => {
-    try {
-        res.json({ 
-            success: true, 
-            defaultExcludedCategories: EXCLUDED_CATEGORIES
-        });
-    } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            error: error.message 
-        });
-    }
+	try {
+		res.json({
+			success: true,
+			defaultExcludedCategories: EXCLUDED_CATEGORIES,
+		});
+	} catch (error) {
+		res.status(500).json({
+			success: false,
+			error: error.message,
+		});
+	}
 });
 
 /**
@@ -104,65 +103,67 @@ app.get('/api/config', (req, res) => {
  * Generates XLF file with translations from Google Sheets
  */
 app.post('/api/export', async (req, res) => {
-    try {
-        const { language } = req.body;
+	try {
+		const { language, maskIds } = req.body;
 
-        if (!language) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Language not specified' 
-            });
-        }
+		if (!language) {
+			return res.status(400).json({
+				success: false,
+				error: 'Language not specified',
+			});
+		}
 
-        // Generate XLF with translations from Google Sheets
-        const result = await generateXLF(language);
+		// Build mask Set if IDs were provided from an optional source file uploaded by the client
+		const maskIdSet = maskIds && Array.isArray(maskIds) && maskIds.length > 0 ? new Set(maskIds) : null;
 
-        if (result.success) {
-            // Return JSON with file content and metadata (including maxwidth errors)
-            const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-            const filename = `translation_${language}_${dateStr}.xlf`;
-            
-            res.json({
-                success: true,
-                filename: filename,
-                content: Buffer.from(result.xlfContent).toString('base64'),
-                maxwidthErrors: result.maxwidthErrors || []
-            });
-        } else {
-            res.status(400).json(result);
-        }
+		// Generate XLF with translations from Google Sheets, optionally filtered by mask
+		const result = await generateXLF(language, maskIdSet);
 
-    } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            error: error.message 
-        });
-    }
+		if (result.success) {
+			// Return JSON with file content and metadata (including maxwidth errors)
+			const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+			const filename = `translation_${language}_${dateStr}.xlf`;
+
+			res.json({
+				success: true,
+				filename: filename,
+				content: Buffer.from(result.xlfContent).toString('base64'),
+				maxwidthErrors: result.maxwidthErrors || [],
+			});
+		} else {
+			res.status(400).json(result);
+		}
+	} catch (error) {
+		res.status(500).json({
+			success: false,
+			error: error.message,
+		});
+	}
 });
 
 /**
  * GET /api/status - Check server status
  */
 app.get('/api/status', (req, res) => {
-    res.json({ 
-        success: true, 
-        status: 'running'
-    });
+	res.json({
+		success: true,
+		status: 'running',
+	});
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(500).json({ 
-        success: false, 
-        error: 'Internal server error' 
-    });
+	console.error('Error:', err);
+	res.status(500).json({
+		success: false,
+		error: 'Internal server error',
+	});
 });
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`XLF Translator server running on http://localhost:${PORT}`);
-    console.log(`Open http://localhost:${PORT} in your browser`);
+	console.log(`XLF Translator server running on http://localhost:${PORT}`);
+	console.log(`Open http://localhost:${PORT} in your browser`);
 });
 
 module.exports = app;

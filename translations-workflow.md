@@ -48,10 +48,10 @@ Inactive or invalid labels are skipped automatically.
    https://xlf-translation-generator-one.vercel.app/
 2. Upload the extracted XLIFF file.
 3. Review detected categories:
-   - Buttons
-   - Custom Fields
-   - Custom Applications
-   - Custom Objects
+    - Buttons
+    - Custom Fields
+    - Custom Applications
+    - Custom Objects
 
 ---
 
@@ -60,8 +60,8 @@ Inactive or invalid labels are skipped automatically.
 1. In the tool, click **Import to Google Sheets**.
 2. Labels are saved in Google Sheet.
 3. Each label has an **Active** flag:
-   - `true` → included in exports
-   - `false` → skipped (old or removed labels)
+    - `true` → included in exports
+    - `false` → skipped (old or removed labels)
 
 The spreadsheet acts as a persistent translation database.
 
@@ -80,9 +80,13 @@ The spreadsheet acts as a persistent translation database.
 ### 6. Generate Translation File
 
 1. Select a target language (e.g. Spanish, French).
-2. Generate and download the XLIFF file.
-3. Labels that exceed the maximum length (**MaxWidth**) are automatically excluded from the file. The file can still be imported.
-4. Fix any validation errors in the translation database and regenerate the file after all issues are resolved.
+2. _(Optional)_ Upload a **source XLF mask file** to restrict the export to only the records present in that file.  
+   This is useful when working with multiple orgs — each org has its own source export, so you only generate a translation file containing the labels that exist in that specific org.
+3. Generate and download the XLIFF file.
+4. Labels that exceed the maximum length (**MaxWidth**) are automatically excluded from the file. The file can still be imported.
+5. Fix any validation errors in the translation database and regenerate the file after all issues are resolved.
+
+> **Export Mask** is non-destructive — it never changes the Google Sheet. It only filters which records appear in the downloaded file.
 
 ---
 
@@ -99,7 +103,7 @@ The spreadsheet acts as a persistent translation database.
 ### 8. Fetch Translation Metadata
 
 1. Update `.forceignore`:
-   - Temporarily comment out `**/objectTranslations/**`.
+    - Temporarily comment out `**/objectTranslations/**`.
 2. Fetch metadata from the Scratch Org.
 3. Translated custom object files are pulled into the project.
 

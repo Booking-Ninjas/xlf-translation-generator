@@ -1,72 +1,94 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XLF Translation Generator</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🌍 XLF Translation Generator</h1>
-            <p>Manage translations via Google Sheets</p>
-        </div>
-        <!-- Import Section -->
-        <div class="card">
-            <h2><span class="card-icon">📥</span> Import XLF to Google Sheets</h2>
-            
-            <div class="file-upload" id="importUpload">
-                <input type="file" id="importFile" accept=".xlf" style="display:none;">
-                <div class="file-upload-label">
-                    📁 Click anywhere to select XLF file<br>
-                    <small>Only en_US source language files are supported</small>
-                </div>
-                <div class="file-name" id="importFileName"></div>
-            </div>
-            
-            <div id="categorySelection" style="display: none;">
-                <h3 style="font-size: 1em; color: #444; margin-bottom: 10px; font-weight: 500;">Select Categories to Import:</h3>
-                <div id="categoryList" class="category-list"></div>
-            </div>
-            
-            <button class="btn" id="importBtn" disabled>Import to Google Sheets</button>
-            
-            <div class="loader" id="importLoader"></div>
-            <div class="message" id="importMessage"></div>
-            
-        </div>
-        <!-- Export Section -->
-        <div class="card">
-            <h2><span class="card-icon">📤</span> Export Translated XLF</h2>
-            
-            <label for="languageSelect" style="display: block; margin-bottom: 10px; color: #666; font-weight: 600;">
-                Select Target Language:
-            </label>
-            <select id="languageSelect" disabled>
-                <option value="">Loading languages...</option>
-            </select>
-            <button class="btn" id="exportBtn">Export XLF with Translations</button>
-            <!-- Error block for maxwidth violations -->
-            <div class="message error" id="maxwidthErrorBlock" style="display:none;"></div>
-            <div class="loader" id="exportLoader"></div>
-            <div class="message" id="exportMessage"></div>
-        </div>
-        <!-- Info Section -->
-        <div class="card">
-            <div class="info-box">
-                <h3>ℹ️ How to Use  (<a href="https://github.com/Booking-Ninjas/xlf-translation-generator/blob/main/translations-workflow.md" target="_blank" style="color: #0070f3; text-decoration: underline;">Full Instructions</a>)</h3>
-                <ul>
-                    <li><strong>Import:</strong> Upload XLF file (source-language="en_US") to sync with Google Sheets</li>
-                    <li><strong>Edit:</strong> Open Google Sheets and add/edit translations</li>
-                    <li><strong>Export:</strong> Select language and download translated XLF anytime</li>
-                </ul>
-                <p style="margin-top: 10px; color: #666;">
-                    <strong>Note:</strong> If English text changes during import, all translations for that segment will be cleared.
-                </p>
-            </div>
-        </div>
-    </div>
-    <script src="script.js"></script>
-</body>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>XLF Translation Generator</title>
+		<link rel="stylesheet" href="style.css" />
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">
+				<h1>🌍 XLF Translation Generator</h1>
+				<p>Manage translations via Google Sheets</p>
+			</div>
+			<!-- Import Section -->
+			<div class="card">
+				<h2><span class="card-icon">📥</span> Import XLF to Google Sheets</h2>
+
+				<div class="file-upload" id="importUpload">
+					<input type="file" id="importFile" accept=".xlf" style="display: none" />
+					<div class="file-upload-label">
+						📁 Click anywhere to select XLF file<br />
+						<small>Only en_US source language files are supported</small>
+					</div>
+					<div class="file-name" id="importFileName"></div>
+				</div>
+
+				<div id="categorySelection" style="display: none">
+					<h3 style="font-size: 1em; color: #444; margin-bottom: 10px; font-weight: 500">
+						Select Categories to Import:
+					</h3>
+					<div id="categoryList" class="category-list"></div>
+				</div>
+
+				<button class="btn" id="importBtn" disabled>Import to Google Sheets</button>
+
+				<div class="loader" id="importLoader"></div>
+				<div class="message" id="importMessage"></div>
+			</div>
+			<!-- Export Section -->
+			<div class="card">
+				<h2><span class="card-icon">📤</span> Export Translated XLF</h2>
+
+				<label for="languageSelect" style="display: block; margin-bottom: 10px; color: #666; font-weight: 600">
+					Select Target Language:
+				</label>
+				<select id="languageSelect" disabled>
+					<option value="">Loading languages...</option>
+				</select>
+				<div class="file-upload file-upload--small" id="maskUpload">
+					<input type="file" id="maskFile" accept=".xlf" style="display: none" />
+					<div class="file-upload-label">
+						📎 Source file mask (optional)<br /><small
+							>Only export records present in this source XLF</small
+						>
+					</div>
+					<div class="file-name" id="maskFileName"></div>
+				</div>
+
+				<button class="btn" id="exportBtn">Export XLF with Translations</button>
+				<!-- Error block for maxwidth violations -->
+				<div class="message error" id="maxwidthErrorBlock" style="display: none"></div>
+				<div class="loader" id="exportLoader"></div>
+				<div class="message" id="exportMessage"></div>
+			</div>
+			<!-- Info Section -->
+			<div class="card">
+				<div class="info-box">
+					<h3>
+						ℹ️ How to Use (<a
+							href="https://github.com/Booking-Ninjas/xlf-translation-generator/blob/main/translations-workflow.md"
+							target="_blank"
+							style="color: #0070f3; text-decoration: underline"
+							>Full Instructions</a
+						>)
+					</h3>
+					<ul>
+						<li>
+							<strong>Import:</strong> Upload XLF file (source-language="en_US") to sync with Google
+							Sheets
+						</li>
+						<li><strong>Edit:</strong> Open Google Sheets and add/edit translations</li>
+						<li><strong>Export:</strong> Select language and download translated XLF anytime</li>
+					</ul>
+					<p style="margin-top: 10px; color: #666">
+						<strong>Note:</strong> If English text changes during import, all translations for that segment
+						will be cleared.
+					</p>
+				</div>
+			</div>
+		</div>
+		<script src="script.js"></script>
+	</body>
 </html>
