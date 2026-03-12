@@ -48,6 +48,9 @@ const EXCLUDED_CATEGORIES = [];
 // Each entry is tested via RegExp.test(id) — use anchors (^) or literals as needed.
 const ID_EXCLUDE_PATTERNS = [/^PicklistValue\.Standard\./];
 
+// Salesforce namespace prefix used by the managed package.
+const NAMESPACE_PREFIX = 'bn2gp__';
+
 module.exports = {
 	GOOGLE_SHEET_ID,
 	SHEET_NAME,
@@ -56,4 +59,5 @@ module.exports = {
 	SYSTEM_COLUMNS,
 	EXCLUDED_CATEGORIES,
 	ID_EXCLUDE_PATTERNS,
+	NAMESPACE_PREFIX,
 };

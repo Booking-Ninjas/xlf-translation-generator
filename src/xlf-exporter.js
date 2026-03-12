@@ -1,5 +1,5 @@
 const xml2js = require('xml2js');
-const { LANGUAGES } = require('./config');
+const { LANGUAGES, NAMESPACE_PREFIX } = require('./config');
 
 /**
  * Generates XLF file with translations for specified language
@@ -9,7 +9,7 @@ const { LANGUAGES } = require('./config');
  * @param {Array} sheetData - Data from Google Sheets
  * @returns {Promise<string>} - Generated XLF content
  */
-async function exportXLF(targetLang, sheetData, maskIds = null) {
+async function exportXLF(targetLang, sheetData, maskIdSet = null) {
 	try {
 		const langCode = LANGUAGES[targetLang];
 		if (!langCode) {
@@ -27,9 +27,42 @@ async function exportXLF(targetLang, sheetData, maskIds = null) {
 			return true;
 		});
 
-		// If an export mask is provided, restrict to only the IDs present in the mask file
-		if (maskIds && maskIds.size > 0) {
-			activeRecords = activeRecords.filter((row) => maskIds.has(row.id));
+		// If an export mask is provided, match each sheet row against the mask IDs.
+		// A mask ID matches a sheet row ID when every dot-separated segment either matches
+		// exactly or the mask segment equals 'bn2gp__' + sheet segment (production org added prefix).
+		// This avoids stripping all prefixes which would cause collisions between objects that
+		// have the same base name but differ only by namespace prefix.
+		if (maskIdSet && maskIdSet.size > 0) {
+			const remapped = [];
+			for (const row of activeRecords) {
+				// Fast path: exact match (same org, no prefix difference)
+				if (maskIdSet.has(row.id)) {
+					remapped.push(row);
+					continue;
+				}
+				// Slow path: segment-level namespace-aware match
+				const rowSegs = row.id.split('.');
+				let matched = null;
+				for (const maskId of maskIdSet) {
+					const maskSegs = maskId.split('.');
+					if (maskSegs.length !== rowSegs.length) continue;
+					// Each mask segment must equal the sheet segment or NAMESPACE_PREFIX + sheet segment
+					if (
+						rowSegs.every(
+							(seg, i) =>
+								maskSegs[i] === seg || (NAMESPACE_PREFIX && maskSegs[i] === NAMESPACE_PREFIX + seg),
+						)
+					) {
+						matched = maskId;
+						break;
+					}
+				}
+				if (matched !== null) {
+					// Use the mask ID in the output so the XLF matches the target org
+					remapped.push({ ...row, id: matched });
+				}
+			}
+			activeRecords = remapped;
 		}
 
 		// Check for maxwidth violations and build trans-units, skipping invalid ones

@@ -210,10 +210,10 @@ async function syncXLFtoSheet(xlfContent, selectedCategories = null) {
  * Independent operation - can be called anytime
  *
  * @param {string} targetLanguage - Target language display name (e.g., 'French', 'Spanish')
- * @param {Set<string>|null} maskIds - Optional Set of IDs to restrict export to (Export Mask)
+ * @param {Set<string>|null} maskIdSet - Optional Set of original mask IDs for Export Mask
  * @returns {Promise<Object>} - Export result with XLF content
  */
-async function generateXLF(targetLanguage, maskIds = null) {
+async function generateXLF(targetLanguage, maskIdSet = null) {
 	try {
 		// Read Google Sheets data and headers
 		const sheetData = await readSheet();
@@ -227,8 +227,8 @@ async function generateXLF(targetLanguage, maskIds = null) {
 			);
 		}
 
-		// Generate XLF from sheet data, optionally filtered by maskIds
-		const { xlf, maxwidthErrors } = await exportXLF(targetLanguage, sheetData, maskIds);
+		// Generate XLF from sheet data, optionally filtered by maskIdSet
+		const { xlf, maxwidthErrors } = await exportXLF(targetLanguage, sheetData, maskIdSet);
 
 		return {
 			success: true,
