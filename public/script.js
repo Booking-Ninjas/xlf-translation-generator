@@ -36,6 +36,10 @@ document.getElementById('importFile').addEventListener('change', async (e) => {
 	if (file) {
 		importedFile = file;
 		document.getElementById('importFileName').textContent = `Selected: ${file.name}`;
+		// Clear previous run result
+		const msg = document.getElementById('importMessage');
+		msg.style.display = 'none';
+		msg.textContent = '';
 		await previewImport();
 	}
 });
@@ -121,6 +125,13 @@ document.getElementById('maskFile').addEventListener('change', (e) => {
 	if (!file) return;
 	maskFileData = file;
 	document.getElementById('maskFileName').textContent = file.name;
+	// Clear previous run result
+	const msg = document.getElementById('exportMessage');
+	msg.style.display = 'none';
+	msg.textContent = '';
+	const errorBlock = document.getElementById('maxwidthErrorBlock');
+	errorBlock.style.display = 'none';
+	errorBlock.innerHTML = '';
 });
 // Export XLF
 document.getElementById('exportBtn').addEventListener('click', async () => {
@@ -215,6 +226,15 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
 		loader.style.display = 'none';
 		btn.disabled = false;
 	}
+});
+// Clear previous run result when language selection changes
+document.getElementById('languageSelect').addEventListener('change', () => {
+	const msg = document.getElementById('exportMessage');
+	msg.style.display = 'none';
+	msg.textContent = '';
+	const errorBlock = document.getElementById('maxwidthErrorBlock');
+	errorBlock.style.display = 'none';
+	errorBlock.innerHTML = '';
 });
 // Initialize
 loadLanguages();
