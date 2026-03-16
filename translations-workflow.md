@@ -1,8 +1,8 @@
-# Salesforce Translation Workflow (Scratch Org)
+# Salesforce Translation Workflow
 
 ## Overview
 
-This document describes how to export, translate, and import custom object translations in a Salesforce Scratch Org using the Translation Workbench and a custom translation generator tool.
+This document describes how to manage translations for Salesforce orgs using the Translation Workbench and a custom translation generator tool.
 
 The process is based on **XLIFF files** and a centralized **Google Sheets translation database**, with validation to prevent invalid imports.
 
@@ -10,21 +10,24 @@ The process is based on **XLIFF files** and a centralized **Google Sheets transl
 
 ---
 
-## How It Works
+## Two Workflows
 
-1. Salesforce exports translations as an **XLIFF** file.
-2. The custom tool parses the file and extracts labels.
-3. All labels are stored in a Google Sheet acting as a translation database.
-4. Translations are added and validated (length limits).
-5. A language-specific XLIFF file is generated.
-6. The file is imported back into the Scratch Org.
-7. Translated metadata is fetched into the project.
+There are two separate workflows depending on the goal:
 
-Inactive or invalid labels are skipped automatically.
+| Workflow                                                                                    | When to use                                                               |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **[Flow 1: Update Translation Database](#flow-1-update-translation-database)**              | New labels were added to the app and the Google Sheet needs to be updated |
+| **[Flow 2: Generate & Deploy Translation File](#flow-2-generate--deploy-translation-file)** | Translations need to be generated and imported into a target org          |
 
 ---
 
-## Step-by-Step Guide
+## Flow 1: Update Translation Database
+
+Use this flow when new metadata (fields, objects, buttons) has been added to the app and the Google Sheet needs to reflect those changes.
+
+> **Warning: Always use a clean dev scratch org with all BN apps installed (main app + all extension packages). Never import from a client org or an org with an installed package.**
+>
+> Every import mutates the Google Sheet. Labels are synced by ID — if a label ID is missing from the uploaded file, it is marked as inactive and excluded from all future translation files. Importing from a client org would add their custom fields and corrupt the database. Importing from an org with incomplete metadata (e.g. BN without POS) would mark missing labels as inactive, breaking translation generation for orgs that do have those modules.
 
 ### 1. Enable Languages in Scratch Org
 
@@ -33,7 +36,7 @@ Inactive or invalid labels are skipped automatically.
 
 ---
 
-### 2. Export Translations from Salesforce
+### 2. Export Translations from Salesforce Scratch Org
 
 1. Go to **Translation Workbench → Export**.
 2. Export translations in **XLIFF format**.
@@ -57,55 +60,75 @@ Inactive or invalid labels are skipped automatically.
 
 ### 4. Import Labels into Translation Database
 
-1. In the tool, click **Import to Google Sheets**.
-2. Labels are saved in Google Sheet.
-3. Each label has an **Active** flag:
-    - `true` → included in exports
-    - `false` → skipped (old or removed labels)
+> **Warning: Only import from a clean dev scratch org with all BN apps installed (main app + all extension packages).**
 
-The spreadsheet acts as a persistent translation database.
+1. In the tool, click **Import to Google Sheets**.
+2. Labels are synced by ID — new labels are added, existing ones are updated.
 
 ---
 
 ### 5. Add Translations
 
-1. Enter translations for required languages in the spreadsheet.
+1. Enter translations for required languages in the Google Sheet.
 2. Follow **MaxWidth** limits for each label.
 3. Cells exceeding limits are highlighted in red.
+4. Each label has an **Active** flag:
+    - `TRUE` → included in exports
+    - `FALSE` → skipped (old or removed labels)
 
 > Labels exceeding limits are excluded from generated files to prevent Salesforce import failures.
 
 ---
 
-### 6. Generate Translation File
+## Flow 2: Generate & Deploy Translation File
 
-1. Select a target language (e.g. Spanish, French).
-2. _(Optional)_ Upload a **source XLF mask file** to restrict the export to only the records present in that file.  
-   This is useful when working with multiple orgs — each org has its own source export, so you only generate a translation file containing the labels that exist in that specific org.
-3. Generate and download the XLIFF file.
-4. Labels that exceed the maximum length (**MaxWidth**) are automatically excluded from the file. The file can still be imported.
-5. Fix any validation errors in the translation database and regenerate the file after all issues are resolved.
+Use this flow when translations need to be generated and imported into a target org (scratch org or an org with an installed package).
 
-> **Export Mask** is non-destructive — it never changes the Google Sheet. It only filters which records appear in the downloaded file.
+The Google Sheet is the single source of truth for all BN app translations. The source file from the target org acts as a filter — it determines which labels from the Google Sheet are included in the output.
+
+### 1. Export Source File from Target Org
+
+1. Go to **Translation Workbench → Export** in the target org.
+2. Export translations in **XLIFF format**.
+3. Wait for the email, download and unzip the file.
 
 ---
 
-### 7. Import Translations into Scratch Org
+### 2. Generate Translation File
 
-1. Open **Translation Workbench → Import** in Scratch Org.
+1. Open the `XLF Translation Generator`  
+   https://xlf-translation-generator-one.vercel.app/
+2. Upload the source XLIFF file from the target org.
+3. In the **Export Translated XLF** section, attach the same source file as a mask.
+4. Select the target language.
+5. Generate and download the XLIFF file.
+
+> **Export Mask** is non-destructive — it never changes the Google Sheet. It only filters which records appear in the downloaded file.
+
+#### Namespace Prefix and Installed Package Orgs
+
+Scratch orgs and orgs with an installed package use different metadata IDs. When a package is installed, Salesforce adds a namespace prefix to every object and field:
+
+| Org type              | Metadata ID example                                                       |
+| --------------------- | ------------------------------------------------------------------------- |
+| Scratch org           | `CustomField.bn2gp__ActivityHistory__c.DescriptionLong.FieldLabel`        |
+| Installed package org | `CustomField.bn2gp__ActivityHistory__c.bn2gp__DescriptionLong.FieldLabel` |
+
+The Google Sheet stores IDs without the namespace prefix (as they appear in the scratch org). The mask file overrides those IDs with whatever is in the source file from the target org — so if the target org has the package installed, the generated file will automatically use the prefixed IDs.
+
+> **To generate translations for an org where the package is installed, always export the mask file from an org with the installed package.**
+
+Labels exceeding **MaxWidth** are automatically excluded from the file. Fix any validation errors in the Google Sheet and regenerate if needed.
+
+---
+
+### 3. Import Translation File into Target Org
+
+1. Open **Translation Workbench → Import** in the target org.
 2. Upload the generated XLIFF file.
 3. Start the import process.
 4. Wait for the confirmation email.
 5. Ensure the import status is successful before continuing.
-
----
-
-### 8. Fetch Translation Metadata
-
-1. Update `.forceignore`:
-    - Temporarily comment out `**/objectTranslations/**`.
-2. Fetch metadata from the Scratch Org.
-3. Translated custom object files are pulled into the project.
 
 ---
 
