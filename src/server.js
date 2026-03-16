@@ -64,6 +64,32 @@ app.post('/api/import', upload.single('xlf'), async (req, res) => {
 });
 
 /**
+ * POST /api/preview-import - Dry-run import to preview how many records will be affected
+ * Accepts the same payload as /api/import but does not write to Google Sheets
+ */
+app.post('/api/preview-import', upload.single('xlf'), async (req, res) => {
+	try {
+		if (!req.file) {
+			return res.status(400).json({ success: false, error: 'No file uploaded' });
+		}
+
+		const xlfContent = req.file.buffer.toString('utf-8');
+		const categories = req.body.categories ? JSON.parse(req.body.categories) : null;
+
+		// Run sync in dry-run mode — reads sheet but skips all writes
+		const result = await syncXLFtoSheet(xlfContent, categories, true);
+
+		if (result.success) {
+			res.json(result);
+		} else {
+			res.status(400).json(result);
+		}
+	} catch (error) {
+		res.status(500).json({ success: false, error: error.message });
+	}
+});
+
+/**
  * GET /api/languages - Get available languages
  */
 app.get('/api/languages', async (req, res) => {

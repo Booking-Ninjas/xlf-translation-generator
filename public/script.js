@@ -109,12 +109,44 @@ async function extractAndDisplayCategories(file) {
 
 		// Display category checkboxes
 		displayCategories();
-		// Enable import button
-		document.getElementById('importBtn').disabled = false;
+		// Load preview stats (also re-enables the import button in its finally block)
+		await previewImport();
 	} catch (error) {
 		console.error('Failed to parse categories:', error);
 		alert('Failed to parse XLF file: ' + error.message + '\n\nPlease check the browser console for more details.');
 		document.getElementById('importBtn').disabled = true;
+	}
+}
+// Fetch dry-run import stats from the server and display the preview block
+async function previewImport() {
+	if (!importedFile || selectedCategories.size === 0) {
+		document.getElementById('importPreview').style.display = 'none';
+		return;
+	}
+	const btn = document.getElementById('importBtn');
+	const loader = document.getElementById('importLoader');
+	btn.disabled = true;
+	loader.style.display = 'block';
+	try {
+		const formData = new FormData();
+		formData.append('xlf', importedFile);
+		formData.append('categories', JSON.stringify(Array.from(selectedCategories)));
+		const response = await fetch('/api/preview-import', {
+			method: 'POST',
+			body: formData,
+		});
+		const data = await response.json();
+		if (data.success) {
+			document.getElementById('previewAdded').textContent = data.stats.added;
+			document.getElementById('previewUpdated').textContent = data.stats.updated;
+			document.getElementById('previewDeactivated').textContent = data.stats.deactivated;
+			document.getElementById('importPreview').style.display = 'block';
+		}
+	} catch (error) {
+		console.error('Preview failed:', error);
+	} finally {
+		loader.style.display = 'none';
+		btn.disabled = false;
 	}
 }
 // Display category checkboxes
@@ -140,6 +172,7 @@ function displayCategories() {
 			} else {
 				selectedCategories.delete(category);
 			}
+			previewImport();
 		});
 		const text = document.createTextNode(' ' + category);
 		label.appendChild(checkbox);

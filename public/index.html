@@ -59,6 +59,24 @@
 
 					<button class="btn" id="importBtn" disabled>Import to Google Sheets</button>
 
+					<div id="importPreview" style="display: none">
+						<p style="font-size: 0.85em; color: #666; margin: 14px 0 6px">Preview of changes:</p>
+						<div class="stats">
+							<div class="stat">
+								<div class="stat-value" id="previewAdded">—</div>
+								<div class="stat-label">will be added</div>
+							</div>
+							<div class="stat">
+								<div class="stat-value" id="previewUpdated">—</div>
+								<div class="stat-label">will be updated</div>
+							</div>
+							<div class="stat">
+								<div class="stat-value" id="previewDeactivated">—</div>
+								<div class="stat-label">will be deactivated</div>
+							</div>
+						</div>
+					</div>
+
 					<div class="loader" id="importLoader"></div>
 					<div class="message" id="importMessage"></div>
 				</div>

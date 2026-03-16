@@ -37,7 +37,7 @@ function isActive(value) {
  * @param {Array<string>} selectedCategories - Optional array of categories to import (null = all)
  * @returns {Promise<Object>} - Sync result with statistics
  */
-async function syncXLFtoSheet(xlfContent, selectedCategories = null) {
+async function syncXLFtoSheet(xlfContent, selectedCategories = null, dryRun = false) {
 	try {
 		// Parse XLF
 		const parsed = await parseXLF(xlfContent);
@@ -177,13 +177,15 @@ async function syncXLFtoSheet(xlfContent, selectedCategories = null) {
 			stats.added++;
 		}
 
-		// Apply all changes to Google Sheet
-		if (rowsToUpdate.length > 0) {
-			await updateRows(rowsToUpdate);
-		}
+		// Apply all changes to Google Sheet (skipped in dry-run mode)
+		if (!dryRun) {
+			if (rowsToUpdate.length > 0) {
+				await updateRows(rowsToUpdate);
+			}
 
-		if (rowsToAdd.length > 0) {
-			await appendRows(rowsToAdd);
+			if (rowsToAdd.length > 0) {
+				await appendRows(rowsToAdd);
+			}
 		}
 
 		const categoryInfo =
