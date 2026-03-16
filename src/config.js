@@ -41,9 +41,6 @@ const BASE_COLUMNS = ['id', 'category', 'maxwidth', 'size-unit', 'English'];
 // System columns
 const SYSTEM_COLUMNS = ['active']; // active (true/false) - marks if record is present in current XLF
 
-// Categories excluded by default during import (user can enable them manually)
-const EXCLUDED_CATEGORIES = [];
-
 // Regex patterns for trans-unit IDs that should be excluded during import.
 // Each entry is tested via RegExp.test(id) — use anchors (^) or literals as needed.
 const ID_EXCLUDE_PATTERNS = [/^PicklistValue\.Standard\./];
@@ -57,7 +54,6 @@ module.exports = {
 	LANGUAGES,
 	BASE_COLUMNS,
 	SYSTEM_COLUMNS,
-	EXCLUDED_CATEGORIES,
 	ID_EXCLUDE_PATTERNS,
 	NAMESPACE_PREFIX,
 };

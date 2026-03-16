@@ -1,7 +1,4 @@
 let importedFile = null;
-let parsedCategories = [];
-let selectedCategories = new Set();
-let defaultExcludedCategories = [];
 
 // Tab switching
 document.querySelectorAll('.tab').forEach((tab) => {
@@ -13,17 +10,6 @@ document.querySelectorAll('.tab').forEach((tab) => {
 	});
 });
 
-async function loadConfig() {
-	try {
-		const response = await fetch('/api/config');
-		const data = await response.json();
-		if (data.success && data.defaultExcludedCategories) {
-			defaultExcludedCategories = data.defaultExcludedCategories;
-		}
-	} catch (error) {
-		console.error('Failed to load config, using defaults:', error);
-	}
-}
 // Load available languages on page load
 async function loadLanguages() {
 	try {
@@ -50,76 +36,12 @@ document.getElementById('importFile').addEventListener('change', async (e) => {
 	if (file) {
 		importedFile = file;
 		document.getElementById('importFileName').textContent = `Selected: ${file.name}`;
-		// Parse file to extract categories
-		await extractAndDisplayCategories(file);
+		await previewImport();
 	}
 });
-// Extract categories from XLF file
-async function extractAndDisplayCategories(file) {
-	try {
-		let text = await file.text();
-		// Handle nested XML declarations (common in some XLF files)
-		// Remove duplicate XML declarations that appear after the first one
-		const xmlDeclRegex = /<\?xml[^?]*\?>/g;
-		const matches = text.match(xmlDeclRegex);
-		if (matches && matches.length > 1) {
-			// Keep only the first XML declaration
-			text = text.replace(xmlDeclRegex, (match, offset) => {
-				return offset === text.indexOf(match) ? match : '';
-			});
-		}
-		const parser = new DOMParser();
-		const xmlDoc = parser.parseFromString(text, 'text/xml');
-		// Check for parsing errors
-		const parserError = xmlDoc.querySelector('parsererror');
-		if (parserError) {
-			console.error('XML Parser Error:', parserError.textContent);
-			throw new Error('Invalid XML format: ' + parserError.textContent);
-		}
-		// Extract all trans-unit IDs (handles nested structure)
-		const transUnits = xmlDoc.getElementsByTagName('trans-unit');
-		const categorySet = new Set();
-
-		if (transUnits.length === 0) {
-			throw new Error('No trans-unit elements found in XLF file');
-		}
-		for (let unit of transUnits) {
-			const id = unit.getAttribute('id');
-			if (id) {
-				// Extract category (first part before the first dot)
-				const category = id.split('.')[0];
-				if (category) {
-					categorySet.add(category);
-				}
-			}
-		}
-		// Sort categories alphabetically
-		parsedCategories = Array.from(categorySet).sort();
-
-		if (parsedCategories.length === 0) {
-			throw new Error('No categories found in XLF file');
-		}
-		// Initialize selected categories (all except those in defaultExcludedCategories)
-		selectedCategories.clear();
-		parsedCategories.forEach((cat) => {
-			if (!defaultExcludedCategories.includes(cat)) {
-				selectedCategories.add(cat);
-			}
-		});
-
-		// Display category checkboxes
-		displayCategories();
-		// Load preview stats (also re-enables the import button in its finally block)
-		await previewImport();
-	} catch (error) {
-		console.error('Failed to parse categories:', error);
-		alert('Failed to parse XLF file: ' + error.message + '\n\nPlease check the browser console for more details.');
-		document.getElementById('importBtn').disabled = true;
-	}
-}
 // Fetch dry-run import stats from the server and display the preview block
 async function previewImport() {
-	if (!importedFile || selectedCategories.size === 0) {
+	if (!importedFile) {
 		document.getElementById('importPreview').style.display = 'none';
 		return;
 	}
@@ -130,7 +52,6 @@ async function previewImport() {
 	try {
 		const formData = new FormData();
 		formData.append('xlf', importedFile);
-		formData.append('categories', JSON.stringify(Array.from(selectedCategories)));
 		const response = await fetch('/api/preview-import', {
 			method: 'POST',
 			body: formData,
@@ -149,38 +70,6 @@ async function previewImport() {
 		btn.disabled = false;
 	}
 }
-// Display category checkboxes
-function displayCategories() {
-	const categoryList = document.getElementById('categoryList');
-	const categorySelection = document.getElementById('categorySelection');
-
-	if (parsedCategories.length === 0) {
-		categorySelection.style.display = 'none';
-		return;
-	}
-	categoryList.innerHTML = '';
-	parsedCategories.forEach((category) => {
-		const label = document.createElement('label');
-		label.className = 'category-item';
-		const checkbox = document.createElement('input');
-		checkbox.type = 'checkbox';
-		checkbox.value = category;
-		checkbox.checked = selectedCategories.has(category);
-		checkbox.addEventListener('change', (e) => {
-			if (e.target.checked) {
-				selectedCategories.add(category);
-			} else {
-				selectedCategories.delete(category);
-			}
-			previewImport();
-		});
-		const text = document.createTextNode(' ' + category);
-		label.appendChild(checkbox);
-		label.appendChild(text);
-		categoryList.appendChild(label);
-	});
-	categorySelection.style.display = 'block';
-}
 // Trigger file input on area click
 document.getElementById('importUpload').addEventListener('click', (e) => {
 	if (e.target.id === 'importFileName') return;
@@ -189,11 +78,6 @@ document.getElementById('importUpload').addEventListener('click', (e) => {
 // Import XLF to Google Sheets
 document.getElementById('importBtn').addEventListener('click', async () => {
 	if (!importedFile) return;
-	// Validate at least one category is selected
-	if (selectedCategories.size === 0) {
-		alert('Please select at least one category to import');
-		return;
-	}
 	const btn = document.getElementById('importBtn');
 	const loader = document.getElementById('importLoader');
 	const message = document.getElementById('importMessage');
@@ -203,7 +87,6 @@ document.getElementById('importBtn').addEventListener('click', async () => {
 	try {
 		const formData = new FormData();
 		formData.append('xlf', importedFile);
-		formData.append('categories', JSON.stringify(Array.from(selectedCategories)));
 		const response = await fetch('/api/import', {
 			method: 'POST',
 			body: formData,
@@ -334,5 +217,4 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
 	}
 });
 // Initialize
-loadConfig();
 loadLanguages();

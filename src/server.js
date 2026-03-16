@@ -5,8 +5,6 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs').promises;
 const { syncXLFtoSheet, generateXLF, getLanguages } = require('./main');
-const { EXCLUDED_CATEGORIES } = require('./config');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -44,11 +42,8 @@ app.post('/api/import', upload.single('xlf'), async (req, res) => {
 		// Read uploaded file from memory buffer
 		const xlfContent = req.file.buffer.toString('utf-8');
 
-		// Get selected categories from request
-		const categories = req.body.categories ? JSON.parse(req.body.categories) : null;
-
-		// Sync to Google Sheets with category filter
-		const result = await syncXLFtoSheet(xlfContent, categories);
+		// Sync to Google Sheets
+		const result = await syncXLFtoSheet(xlfContent);
 
 		if (result.success) {
 			res.json(result);
@@ -74,10 +69,9 @@ app.post('/api/preview-import', upload.single('xlf'), async (req, res) => {
 		}
 
 		const xlfContent = req.file.buffer.toString('utf-8');
-		const categories = req.body.categories ? JSON.parse(req.body.categories) : null;
 
 		// Run sync in dry-run mode — reads sheet but skips all writes
-		const result = await syncXLFtoSheet(xlfContent, categories, true);
+		const result = await syncXLFtoSheet(xlfContent, true);
 
 		if (result.success) {
 			res.json(result);
@@ -98,23 +92,6 @@ app.get('/api/languages', async (req, res) => {
 		res.json({
 			success: true,
 			languages,
-		});
-	} catch (error) {
-		res.status(500).json({
-			success: false,
-			error: error.message,
-		});
-	}
-});
-
-/**
- * GET /api/config - Get configuration (excluded categories, etc.)
- */
-app.get('/api/config', (req, res) => {
-	try {
-		res.json({
-			success: true,
-			defaultExcludedCategories: EXCLUDED_CATEGORIES,
 		});
 	} catch (error) {
 		res.status(500).json({
