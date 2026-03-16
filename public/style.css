@@ -198,6 +198,82 @@ select:focus {
 	border-radius: 4px;
 	font-size: 1em;
 }
+/* Tab navigation */
+.tabs {
+	display: flex;
+	gap: 0;
+	margin-bottom: 18px;
+	border-radius: 6px;
+	overflow: hidden;
+	border: 1px solid #e0e0e0;
+	background: #f4f6f8;
+}
+.tab {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 13px 16px;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	text-align: left;
+	transition:
+		background 0.15s,
+		color 0.15s;
+	border-right: 1px solid #e0e0e0;
+}
+.tab:last-child {
+	border-right: none;
+}
+.tab:hover:not(.active) {
+	background: #e3eaf3;
+}
+.tab.active {
+	background: #1976d2;
+	border-right-color: #1565c0;
+}
+.tab-icon {
+	font-size: 1.3em;
+	line-height: 1;
+	flex-shrink: 0;
+}
+.tab-label {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.tab-title {
+	font-size: 0.97em;
+	font-weight: 600;
+	color: #222;
+	line-height: 1.2;
+}
+.tab-desc {
+	font-size: 0.78em;
+	color: #777;
+	font-weight: 400;
+}
+.tab.active .tab-title {
+	color: #fff;
+}
+.tab.active .tab-desc {
+	color: rgba(255, 255, 255, 0.75);
+}
+.tab.active .tab-icon {
+	filter: brightness(10);
+}
+/* Flow description inside card */
+.flow-info {
+	background: #f4f6f8;
+	border-left: 2px solid #1976d2;
+	padding: 9px 12px;
+	border-radius: 3px;
+	font-size: 0.88em;
+	color: #555;
+	margin-bottom: 14px;
+	line-height: 1.5;
+}
 .info-box h3 {
 	color: #222;
 	margin-bottom: 10px;

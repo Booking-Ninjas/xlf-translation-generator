@@ -12,58 +12,97 @@
 				<h1>🌍 XLF Translation Generator</h1>
 				<p>Manage translations via Google Sheets</p>
 			</div>
-			<!-- Import Section -->
-			<div class="card">
-				<h2><span class="card-icon">📥</span> Import XLF to Google Sheets</h2>
 
-				<div class="file-upload" id="importUpload">
-					<input type="file" id="importFile" accept=".xlf" style="display: none" />
-					<div class="file-upload-label">
-						📁 Click anywhere to select XLF file<br />
-						<small>Only en_US source language files are supported</small>
-					</div>
-					<div class="file-name" id="importFileName"></div>
-				</div>
-
-				<div id="categorySelection" style="display: none">
-					<h3 style="font-size: 1em; color: #444; margin-bottom: 10px; font-weight: 500">
-						Select Categories to Import:
-					</h3>
-					<div id="categoryList" class="category-list"></div>
-				</div>
-
-				<button class="btn" id="importBtn" disabled>Import to Google Sheets</button>
-
-				<div class="loader" id="importLoader"></div>
-				<div class="message" id="importMessage"></div>
+			<!-- Tab Navigation -->
+			<div class="tabs">
+				<button class="tab active" data-tab="flow1">
+					<span class="tab-icon">📥</span>
+					<span class="tab-label">
+						<span class="tab-title">Update Database</span>
+						<span class="tab-desc">Flow 1 — Import from scratch org</span>
+					</span>
+				</button>
+				<button class="tab" data-tab="flow2">
+					<span class="tab-icon">📤</span>
+					<span class="tab-label">
+						<span class="tab-title">Generate File</span>
+						<span class="tab-desc">Flow 2 — Export for target org</span>
+					</span>
+				</button>
 			</div>
-			<!-- Export Section -->
-			<div class="card">
-				<h2><span class="card-icon">📤</span> Export Translated XLF</h2>
 
-				<label for="languageSelect" style="display: block; margin-bottom: 10px; color: #666; font-weight: 600">
-					Select Target Language:
-				</label>
-				<select id="languageSelect" disabled>
-					<option value="">Loading languages...</option>
-				</select>
-				<div class="file-upload file-upload--small" id="maskUpload">
-					<input type="file" id="maskFile" accept=".xlf" style="display: none" />
-					<div class="file-upload-label">
-						📎 Source file mask (optional)<br /><small
-							>Only export records present in this source XLF</small
-						>
+			<!-- Flow 1: Update Translation Database -->
+			<div class="tab-content" id="tab-flow1">
+				<div class="card">
+					<h2><span class="card-icon">📥</span> Import XLF to Google Sheets</h2>
+
+					<div class="flow-info">
+						Use this flow when new labels were added to the app and the Google Sheet needs to be updated.
+						Upload a source XLF file exported from a clean dev scratch org with all BN apps installed.
 					</div>
-					<div class="file-name" id="maskFileName"></div>
-				</div>
 
-				<button class="btn" id="exportBtn">Export XLF with Translations</button>
-				<!-- Error block for maxwidth violations -->
-				<div class="message error" id="maxwidthErrorBlock" style="display: none"></div>
-				<div class="loader" id="exportLoader"></div>
-				<div class="message" id="exportMessage"></div>
+					<div class="file-upload" id="importUpload">
+						<input type="file" id="importFile" accept=".xlf" style="display: none" />
+						<div class="file-upload-label">
+							📁 Click anywhere to select XLF file<br />
+							<small>Only en_US source language files are supported</small>
+						</div>
+						<div class="file-name" id="importFileName"></div>
+					</div>
+
+					<div id="categorySelection" style="display: none">
+						<h3 style="font-size: 1em; color: #444; margin-bottom: 10px; font-weight: 500">
+							Select Categories to Import:
+						</h3>
+						<div id="categoryList" class="category-list"></div>
+					</div>
+
+					<button class="btn" id="importBtn" disabled>Import to Google Sheets</button>
+
+					<div class="loader" id="importLoader"></div>
+					<div class="message" id="importMessage"></div>
+				</div>
 			</div>
-			<!-- Info Section -->
+
+			<!-- Flow 2: Generate & Deploy Translation File -->
+			<div class="tab-content" id="tab-flow2" style="display: none">
+				<div class="card">
+					<h2><span class="card-icon">📤</span> Generate Translation File</h2>
+
+					<div class="flow-info">
+						Use this flow to generate a translated XLF file for import into a target org. Upload the source
+						XLF from the target org as a mask to filter which labels are included.
+					</div>
+
+					<label
+						for="languageSelect"
+						style="display: block; margin-bottom: 10px; color: #666; font-weight: 600"
+					>
+						Select Target Language:
+					</label>
+					<select id="languageSelect" disabled>
+						<option value="">Loading languages...</option>
+					</select>
+
+					<div class="file-upload file-upload--small" id="maskUpload">
+						<input type="file" id="maskFile" accept=".xlf" style="display: none" />
+						<div class="file-upload-label">
+							📎 Source file mask (optional)<br /><small
+								>Only export records present in this source XLF</small
+							>
+						</div>
+						<div class="file-name" id="maskFileName"></div>
+					</div>
+
+					<button class="btn" id="exportBtn">Export XLF with Translations</button>
+					<!-- Error block for maxwidth violations -->
+					<div class="message error" id="maxwidthErrorBlock" style="display: none"></div>
+					<div class="loader" id="exportLoader"></div>
+					<div class="message" id="exportMessage"></div>
+				</div>
+			</div>
+
+			<!-- Info Section (always visible) -->
 			<div class="card">
 				<div class="info-box">
 					<h3>
@@ -76,11 +115,14 @@
 					</h3>
 					<ul>
 						<li>
-							<strong>Import:</strong> Upload XLF file (source-language="en_US") to sync with Google
-							Sheets
+							<strong>Flow 1 — Update Database:</strong> Upload XLF from a clean scratch org to sync
+							labels with Google Sheets
 						</li>
-						<li><strong>Edit:</strong> Open Google Sheets and add/edit translations</li>
-						<li><strong>Export:</strong> Select language and download translated XLF anytime</li>
+						<li><strong>Edit:</strong> Open Google Sheets and add/edit translations for each language</li>
+						<li>
+							<strong>Flow 2 — Generate File:</strong> Select language, attach source mask, download
+							translated XLF for import
+						</li>
 					</ul>
 					<p style="margin-top: 10px; color: #666">
 						<strong>Note:</strong> If English text changes during import, all translations for that segment
