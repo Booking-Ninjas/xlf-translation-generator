@@ -88,15 +88,16 @@ Your Google Sheet must have these columns (order doesn't matter):
 
 2. Open browser: `http://localhost:3000`
 
-3. **Import XLF:**
-    - Click "Import" section
+3. **Import XLF** (Update Database tab):
+    - Select the **Update Database** tab
     - Select your `.xlf` file (must be `source-language="en_US"`)
-    - Select categories to import (all except CustomLabel are enabled by default)
     - Click "Import to Google Sheets"
     - View statistics: Added, Updated, Unchanged, Deactivated
 
-4. **Export XLF:**
+4. **Export XLF** (Generate Translation File tab):
+    - Select the **Generate Translation File** tab
     - Select target language from dropdown
+    - Optionally attach a source XLF as a mask to filter which labels are included
     - Click "Export XLF with Translations"
     - Download: `translation_French_2026-01-14.xlf`
 

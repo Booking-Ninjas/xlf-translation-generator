@@ -49,12 +49,8 @@ Use this flow when new metadata (fields, objects, buttons) has been added to the
 
 1. Open the `XLF Translation Generator`  
    https://xlf-translation-generator-one.vercel.app/
-2. Upload the extracted XLIFF file.
-3. Review detected categories:
-    - Buttons
-    - Custom Fields
-    - Custom Applications
-    - Custom Objects
+2. Select the **📥 Update Database** tab.
+3. Upload the extracted XLIFF file.
 
 ---
 
@@ -62,7 +58,7 @@ Use this flow when new metadata (fields, objects, buttons) has been added to the
 
 > **Warning: Only import from a clean dev scratch org with all BN apps installed (main app + all extension packages).**
 
-1. In the tool, click **Import to Google Sheets**.
+1. In the **📥 Update Database** tab, click **Import to Google Sheets**.
 2. Labels are synced by ID — new labels are added, existing ones are updated.
 
 ---
@@ -98,8 +94,8 @@ The Google Sheet is the single source of truth for all BN app translations. The 
 
 1. Open the `XLF Translation Generator`  
    https://xlf-translation-generator-one.vercel.app/
-2. Upload the source XLIFF file from the target org.
-3. In the **Export Translated XLF** section, attach the same source file as a mask.
+2. Select the **📤 Generate Translation File** tab.
+3. Upload the source XLIFF file from the target org as a mask.
 4. Select the target language.
 5. Generate and download the XLIFF file.
 
