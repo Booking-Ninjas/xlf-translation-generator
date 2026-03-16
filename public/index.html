@@ -44,7 +44,7 @@
 					<div class="file-upload" id="importUpload">
 						<input type="file" id="importFile" accept=".xlf" style="display: none" />
 						<div class="file-upload-label">
-							📁 Click anywhere to select XLF file<br />
+							Source XLF file<br />
 							<small>Only en_US source language files are supported</small>
 						</div>
 						<div class="file-name" id="importFileName"></div>
@@ -99,12 +99,11 @@
 						<option value="">Loading languages...</option>
 					</select>
 
-					<div class="file-upload file-upload--small" id="maskUpload">
+					<div class="file-upload" id="maskUpload">
 						<input type="file" id="maskFile" accept=".xlf" style="display: none" />
 						<div class="file-upload-label">
-							📎 Source file mask (optional)<br /><small
-								>Only export records present in this source XLF</small
-							>
+							Source file mask (optional)<br />
+							<small>filters which labels will be included in the generated file</small>
 						</div>
 						<div class="file-name" id="maskFileName"></div>
 					</div>
