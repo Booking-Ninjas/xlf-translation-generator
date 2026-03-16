@@ -71,6 +71,7 @@ async function syncXLFtoSheet(xlfContent, dryRun = false) {
 		const stats = {
 			added: 0,
 			updated: 0,
+			activated: 0,
 			unchanged: 0,
 			deactivated: 0,
 		};
@@ -115,7 +116,11 @@ async function syncXLFtoSheet(xlfContent, dryRun = false) {
 						});
 
 						rowsToUpdate.push({ row: rowNumber, data: updatedRow });
-						stats.updated++;
+						if (!isActive(row.active)) {
+							stats.activated++;
+						} else {
+							stats.updated++;
+						}
 					} else {
 						// Only metadata changed (maxwidth, size-unit, or active status)
 						rowsToUpdate.push({
@@ -127,7 +132,11 @@ async function syncXLFtoSheet(xlfContent, dryRun = false) {
 								active: true,
 							},
 						});
-						stats.unchanged++;
+						if (!isActive(row.active)) {
+							stats.activated++;
+						} else {
+							stats.unchanged++;
+						}
 					}
 				} else {
 					stats.unchanged++;
@@ -182,7 +191,7 @@ async function syncXLFtoSheet(xlfContent, dryRun = false) {
 			success: true,
 			stats,
 			totalSegments: segments.length,
-			message: `Sync completed: ${stats.added} added, ${stats.updated} updated, ${stats.unchanged} unchanged, ${stats.deactivated} deactivated`,
+			message: `Sync completed: ${stats.added} added, ${stats.updated} updated, ${stats.activated} activated, ${stats.deactivated} deactivated, ${stats.unchanged} unchanged`,
 		};
 	} catch (error) {
 		return {

@@ -49,6 +49,7 @@ async function importXLF(filePath) {
 			console.log('Import completed.');
 			console.log(`   Added: ${result.stats.added}`);
 			console.log(`   Updated: ${result.stats.updated}`);
+			console.log(`   Activated: ${result.stats.activated}`);
 			console.log(`   Unchanged: ${result.stats.unchanged}`);
 			console.log(`   Deactivated: ${result.stats.deactivated}`);
 		} else {

@@ -64,6 +64,7 @@ async function previewImport() {
 		if (data.success) {
 			document.getElementById('previewAdded').textContent = data.stats.added;
 			document.getElementById('previewUpdated').textContent = data.stats.updated;
+			document.getElementById('previewActivated').textContent = data.stats.activated;
 			document.getElementById('previewDeactivated').textContent = data.stats.deactivated;
 			document.getElementById('importPreview').style.display = 'block';
 		}
